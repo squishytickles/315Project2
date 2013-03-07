@@ -1,8 +1,9 @@
-
-  				TEAM 27 - Fanorona Sprint One
+  			
+			TEAM 27 - Fanorona Sprint One
 					
-=====================================================================
+=================================================================================
 
+	[] Set up swing library with project
 	[] User launches program and sees a title/introduction message
 		[] User can click to view game instruction
 		[] User can click to start game and see initial board state
