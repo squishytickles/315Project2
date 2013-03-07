@@ -1,49 +1,49 @@
-
-  				TEAM 27 - Fanorona Backlog
+  				
+			TEAM 27 - Fanorona Backlog
 					
-=====================================================================
+==================================================================================
 
 	[] Set up swing library with project
 	[] User launches program and sees a title/introduction message
-		*[] User can click to view game instruction
-		*[] User can click to start game and see initial board state
+		[] User can click to view game instruction
+		[] User can click to start game and see initial board state
 	[] User enters a move by typing positions
 	[] User enters a move by defined click-and-move process
-		*[] User click selects appropriate piece
-		*[] Result of move on board state is calculated
-		*[] Server updates board state
-		*[] Server sends update to both clients
+		[] User click selects appropriate piece
+		[] Result of move on board state is calculated
+		[] Server updates board state
+		[] Server sends update to both clients
 	[] User sees a display of the current board state
-		*[] Main menu button can be clicked to return to main menu	
-		*[] Restart button to return to initial board state
-		*[] Number of pieces remaining for each player is displayed
-		*[] Last color to move is displayed
-		*[] Hint button 
-	*[] Determine whether a double move can be made
-		*[] A piece cannot move in same direction twice
-		*[] It cannot return to a previously visited position in move
-	*[] Determine whether any number of multiple moves can be made
+		[] Main menu button can be clicked to return to main menu	
+		[] Restart button to return to initial board state
+		[] Number of pieces remaining for each player is displayed
+		[] Last color to move is displayed
+		[] Hint button 
+	[] Determine whether a double move can be made
+		[] A piece cannot move in same direction twice
+		[] It cannot return to a previously visited position in move
+	[] Determine whether any number of multiple moves can be made
 	[] Board state is checked to determine if either player has won
-		*[] Winning message/screen appears
-		*[] Restart and return to main menu options appear
+		[] Winning message/screen appears
+		[] Restart and return to main menu options appear
 	[] Game is checked to determine if maximum number of moves has been exceeded
-		*[] Tie message/screen appears
-		*[] Restart and return to main menu options appear	
+		[] Tie message/screen appears
+		[] Restart and return to main menu options appear	
 	[] User gets response of invalid if proposing an invalid move
 	[] Computer identifies all valid moves
-		*[] Moves are stored 
+		[] Moves are stored 
 	[] Computer can randomly select a valid move
-		*[] Server updates board state
-		*[] Server sends update to both clients	
+		[] Server updates board state
+		[] Server sends update to both clients	
 	[] Re-display the current board state
 	[] Computer looks ahead one move in tree
-		*[] Maximize/minimize move based on what turn it is
+		[] Maximize/minimize move based on what turn it is
 	[] Minimax tree used for AI
-		*[] Fill up tree with values
-		*[] Update tree after move is made on board
+		[] Fill up tree with values
+		[] Update tree after move is made on board
 	[] Alpha-beta pruning implemented at one level
 	[] Alpha-beta pruning implemented across all levels
 	[] Iterative deepening implemented
 	[] Board evaluation function works for determining winner/loser
-		*[] Winner has removed all other players pieces
-		*[] Loser has no pieces remaining on board
+		[] Winner has removed all other players pieces
+		[] Loser has no pieces remaining on board
