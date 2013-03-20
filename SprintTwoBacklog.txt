@@ -1,0 +1,54 @@
+
+================================================================================= 
+ 
+			TEAM 27 - Fanorona Sprint Two
+					
+=================================================================================
+
+Sarah:
+
+	[] User enters a move by typing positions
+	[] User enters a move by defined click-and-move process
+		[] User click selects appropriate piece
+		[] Result of move on board state is calculated
+		[] Server updates board state
+		[] Server sends update to both clients
+	[] User sees a display of the current board state
+		[] Main menu button can be clicked to return to main menu	
+		[] Restart button to return to initial board state
+		[] Number of pieces remaining for each player is displayed
+		[] Last color to move is displayed
+		[] Hint button
+		
+Kyle:
+	
+	[] Determine whether a double move can be made
+		[] A piece cannot move in same direction twice
+		[] It cannot return to a previously visited position in move
+	[] Determine whether any number of multiple moves can be made
+	[] Board state is checked to determine if either player has won
+		[] Winning message/screen appears
+		[] Restart and return to main menu options appear	
+	[] Game is checked to determine if maximum number of moves has been exceeded
+		[] Tie message/screen appears
+		[] Restart and return to main menu options appear	
+		
+Alec:
+	
+	[] User gets response of invalid if proposing an invalid move
+	[] Computer identifies all valid moves
+		[] Moves are stored 
+	[] Computer can randomly select a valid move
+		[] Server updates board state
+		[] Server sends update to both clients	
+	[] Re-display the current board state
+	
+=================================================================================  	
+	
+			TEAM 27 - Sprint Two SCRUM Meetings
+					
+=================================================================================
+
+	Thursday - March, 24 - Lab
+	Friday - March, 25 - 1PM
+	Sunday - March, 27 - Text For Time
