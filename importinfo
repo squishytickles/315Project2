@@ -1,0 +1,11 @@
+How To Import Projects into Eclipse:
+
+1) download and unzip the project file from Github, save it somewhere on your machine
+2) open Eclipse - do NOT set the workspace as the same place that you saved the project file
+3) go to File -> Import -> General -> Existing Projects into Workspace
+4) In the Select Root Directory box, enter in the main folder containing the project you want to import
+    -So for our Fanorona project, use the main file (called Fanorona) that contains the .metadata file and the other
+     file called Fanorona (i.e. don't use the second Fanorona file that is in the first Fanorona file, use the first one)
+
+That should be it. After you select that file, there should be a checkbox with the path to that file selected in the 
+text box. If you can't select the checkbox then that means there is already that file in whatever workspace you're using
