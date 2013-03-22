@@ -1,0 +1,160 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.*;
+
+
+public class game extends JApplet implements MouseListener {
+
+	JPanel content;
+	private MyPanel mainWin;
+	private HistoryPanel histWin;
+	//private MyPanel2 instrWin;
+	//private MyPanel2 gameWin;
+	
+	Graphics graphic;
+
+	static final int WIDTH = 400;
+	static final int HEIGHT = 300;
+	static final int MAIN_WIDTH = 400;
+	static final int MAIN_HEIGHT = 200;
+	static final int SPEED = 100;
+	
+	Button history;
+	Button instructions;
+	Button newGame;
+
+	public void init()
+	{
+		//create main menu window
+		JFrame mainMenu = new JFrame("FANORONA");
+		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JPanel content = new JPanel();
+		content.setLayout(new CardLayout());
+		
+		mainWin = new MyPanel(content);
+		histWin = new HistoryPanel(content);
+		//instrWin = new MyPanel2();
+		//gameWin = new MyPanel2();
+		
+		content.add(mainWin, "Main Menu");
+		content.add(histWin, "Hisory");
+		
+		mainMenu.setContentPane(content);
+        mainMenu.pack();   
+        mainMenu.setLocationByPlatform(true);
+        mainMenu.setVisible(true);
+		
+		//set main menu's size
+		mainMenu.setSize(MAIN_WIDTH, MAIN_HEIGHT);
+		mainMenu.setVisible(true);
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseReleased(MouseEvent arg0) {
+		
+		
+	}
+}
+
+class MyPanel extends JPanel
+{
+	private JPanel content;
+	private JLabel text;
+	private JButton history;
+	private JButton instructions;
+	private JButton newGame;
+	
+	public MyPanel(JPanel mainWin){
+		content = mainWin;
+		
+		//set welcome text
+		text = new JLabel("Welcome to Fanorona", SwingConstants.CENTER);
+		text.setBounds (35, 30, 185, 50);
+		
+		//set size of main window
+		setPreferredSize(new Dimension(400, 250));
+		//setLayout(new FlowLayout());
+		
+		//create and add buttons
+		history = new JButton("History");
+		instructions = new JButton("Instructions");
+		newGame = new JButton("New Game");
+		
+		history.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.next(content);
+            }
+        });
+		
+		add(text);
+		add(history);
+		add(instructions);
+		add(newGame);
+	}
+}
+
+//creates the history window
+class HistoryPanel extends JPanel {
+	private JPanel content;
+	private JLabel hist;
+	private JButton back;
+	
+	public HistoryPanel(JPanel mainWin) {
+		content = mainWin;
+		
+		//set size of window
+		setPreferredSize(new Dimension(200,200));
+		
+		//create history text
+		hist = new JLabel("<html>HISTORY: <br><html>" 
+			   + "Fanorona is a game and I don't know anything about its history.");
+		
+		//create back button
+		back = new JButton("Back");
+		
+		//set button action to go back to main menu
+		back.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.first(content);
+            }
+        });
+		
+		//add button and text to window
+		add(hist);
+		add(back);
+	}
+
+}

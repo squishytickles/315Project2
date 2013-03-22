@@ -1,0 +1,201 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.*;
+
+
+public class game extends JApplet implements MouseListener {
+
+	JPanel content;
+	private MyPanel mainWin;
+	private InstrPanel instrWin;
+	private GamePanel gameWin;
+	
+	Graphics graphic;
+
+	static final int WIDTH = 400;
+	static final int HEIGHT = 300;
+	static final int MAIN_WIDTH = 400;
+	static final int MAIN_HEIGHT = 200;
+	static final int SPEED = 100;
+	
+	Button instructions;
+	Button newGame;
+
+	public void init()
+	{
+		//create main menu window
+		JFrame mainMenu = new JFrame("FANORONA");
+		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JPanel content = new JPanel();
+		content.setLayout(new CardLayout());
+		
+		mainWin = new MyPanel(content);
+		instrWin = new InstrPanel(content);
+		gameWin = new GamePanel(content);
+		
+		content.add(mainWin, "Main Menu");
+		content.add(instrWin, "Instructions");
+		content.add(gameWin, "Fanorona");
+		
+		mainMenu.setContentPane(content);
+        mainMenu.pack();   
+        mainMenu.setLocationByPlatform(true);
+        mainMenu.setVisible(true);
+		
+		//set main menu's size
+		mainMenu.setSize(MAIN_WIDTH, MAIN_HEIGHT);
+		mainMenu.setVisible(true);
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseReleased(MouseEvent arg0) {
+		
+		
+	}
+}
+
+class MyPanel extends JPanel
+{
+	private JPanel content;
+	private JPanel instr;
+	private JPanel games;
+	private JLabel text;
+	private JButton history;
+	private JButton instructions;
+	private JButton newGame;
+	
+	public MyPanel(JPanel mainWin){
+		content = mainWin;
+		
+		//set welcome text
+		text = new JLabel("Welcome to Fanorona", SwingConstants.CENTER);
+		
+		//set size of main window
+		setPreferredSize(new Dimension(400, 250));
+		//setLayout(new FlowLayout());
+		
+		//create and add buttons
+		instructions = new JButton("Instructions");
+		newGame = new JButton("New Game");
+		
+		
+		instructions.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.next(content);
+            }
+        });
+		
+		newGame.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.last(content);
+            }
+        });
+		
+		add(text);
+		add(instructions);
+		add(newGame);
+	}
+}
+
+class InstrPanel extends JPanel {
+	private JPanel content;
+	private JLabel instr;
+	private JButton back;
+	
+	public InstrPanel(JPanel mainWin) {
+		content = mainWin;
+		
+		//set size of window
+		setPreferredSize(new Dimension(200,200));
+		
+		//create instructions text
+		instr = new JLabel("<html>INSTRUCTIONS: <br><html>" 
+			   + "<html>Step 1: click the piece you want to move<br><html>"
+			   + "<html>Step 2: click the place on the board you want to move to<br><html>"
+			   + "<html>Step 3: blah blah... to be continued<br><html>");
+		
+		//create back button
+		back = new JButton("Back");
+		
+		//set button action to go back to main menu
+		back.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.first(content);
+            }
+        });
+		
+		//add button and text to window
+		add(instr);
+		add(back);
+	}
+}
+
+class GamePanel extends JPanel {
+	private JPanel content;
+	private JLabel game;
+	private JButton back;
+	
+	public GamePanel(JPanel mainWin) {
+		content = mainWin;
+		
+		//set size of window
+		setPreferredSize(new Dimension(400,250));
+		
+		//create history text
+		game = new JLabel("<html>FANORONA<br><html>");
+		
+		//create back button
+		back = new JButton("Back");
+		
+		//set button action to go back to main menu
+		back.addActionListener( new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                CardLayout layout = (CardLayout) content.getLayout();
+                layout.last(content);
+            }
+        });
+		
+		//add button and text to window
+		add(game);
+		add(back);
+	}
+}
+
