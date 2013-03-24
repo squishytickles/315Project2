@@ -1,0 +1,291 @@
+import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+
+public class game extends JApplet{
+
+	JPanel content;
+	private MainPanel mainWin;
+	private InstrPanel instrWin;
+	private GamePanel gameWin;
+
+	static final int MAIN_WIDTH = 750;
+	static final int MAIN_HEIGHT = 450;
+	static final int SPEED = 100;
+	
+	static final int LENGTH = 9;
+	static final int HEIGHT = 5;
+	public int[][] pieceMap = new int[LENGTH][HEIGHT];
+	
+	static final int RADIUS = 15;
+	static final int SPACE_BTW_X = 81;
+	static final int SPACE_BTW_Y = 87;
+	static final int MARGIN = 50;
+	
+	Graphics g;
+	
+	Button instructions;
+	Button newGame;
+
+	//initialize all Panels
+	public void init()
+	{
+		//create main menu window
+		JFrame mainMenu = new JFrame("FANORONA");
+		mainMenu.setSize(MAIN_WIDTH, MAIN_HEIGHT);
+		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JPanel content = new JPanel();
+		content.setLayout(new CardLayout());
+		
+		mainWin = new MainPanel(content);
+		instrWin = new InstrPanel(content);
+		gameWin = new GamePanel(content);
+		
+		content.add(mainWin, "Main Menu");
+		content.add(instrWin, "Instructions");
+		content.add(gameWin, "Fanorona");
+		
+		mainMenu.setContentPane(content);
+        mainMenu.pack();   
+        mainMenu.setLocationByPlatform(true);
+        mainMenu.setVisible(true);
+	}
+
+
+	//Panel Classes
+	class MainPanel extends JPanel
+	{
+		private JPanel content;
+		private JLabel text;
+		private JButton instructions;
+		private JButton newGame;
+		
+		private BufferedImage mainImage;
+		
+		//create the main Panel
+		public MainPanel(JPanel mainWin){
+			content = mainWin;
+			
+			//set welcome text
+			text = new JLabel("Welcome to Fanorona");
+			
+			//set size of main window
+			setPreferredSize(new Dimension(750, 450));
+			this.setLayout(new FlowLayout());
+			
+			//create buttons
+			instructions = new JButton("Instructions");
+			newGame = new JButton("New Game");
+			
+			//import game board image
+			try {
+				mainImage = ImageIO.read(new File("img/main.jpg"));
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+					
+			instructions.addActionListener( new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                CardLayout layout = (CardLayout) content.getLayout();
+	                layout.next(content);
+	            }
+	        });
+			
+			newGame.addActionListener( new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                CardLayout layout = (CardLayout) content.getLayout();
+	                layout.last(content);
+	            }
+	        });
+			
+			repaint();
+			mapInitPieces();
+			add(instructions);
+			add(newGame);
+			add(text);
+		}
+	
+		//draw the main menu's background
+		public void paintComponent(Graphics g) {
+			super.paintComponent(g);
+		    g.drawImage(mainImage, 0, 0, null);
+		  }
+	}
+	
+	class InstrPanel extends JPanel {
+		private JPanel content;
+		private JLabel instr;
+		private JButton back;
+		
+		//create the Instructions Panel
+		public InstrPanel(JPanel mainWin) {
+			content = mainWin;
+			
+			//set size of window
+			setLayout(new FlowLayout());
+			setPreferredSize(new Dimension(750,450));
+			
+			//create instructions text
+			instr = new JLabel("<html>INSTRUCTIONS: <br><html>" 
+				   + "<html>Step 1: click the piece you want to move<br><html>"
+				   + "<html>Step 2: click the place on the board you want to move to<br><html>"
+				   + "<html>Step 3: blah blah... to be continued<br><html>");
+			
+			//create back button
+			back = new JButton("Back");
+			
+			//set button action to go back to main menu
+			back.addActionListener( new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                CardLayout layout = (CardLayout) content.getLayout();
+	                layout.first(content);
+	            }
+	        });
+			
+			//add button and text to window
+			add(instr);
+			add(back);
+		}
+	}
+	
+	class GamePanel extends JPanel {
+		private JPanel content;
+		private JButton back;
+		private JButton reset;
+		private JButton hint;
+	
+		private BufferedImage gameBoard;
+		
+		//create the GamePanel
+		public GamePanel(JPanel mainWin) {
+			content = mainWin;
+			
+			this.setLayout(new FlowLayout());
+			setPreferredSize(new Dimension(750,450));
+			back = new JButton("Back");
+			reset = new JButton("Restart");
+			hint = new JButton("Hint");
+			
+			//import game board image
+			try {
+				gameBoard = ImageIO.read(new File("img/gameboard.png"));
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			//set button action to go back to main menu
+			back.addActionListener( new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                CardLayout layout = (CardLayout) content.getLayout();
+	                layout.first(content);
+	            }
+	        });
+			
+			//repaint the gameboard to beginning state
+			reset.addActionListener( new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	               repaint();
+	            }
+	        });
+			
+			//show user a place to move
+			hint.addActionListener( new ActionListener()
+	        {
+				public void actionPerformed(ActionEvent e)
+	            {
+	              //
+	            }
+	        });
+			
+			
+			repaint();
+			add(back);
+			add(hint);
+			add(reset);	
+		}
+		
+		public void paintComponent(Graphics g)
+		{
+			super.paintComponent(g);
+			g.drawImage(gameBoard, 0, 0, null);
+			drawPieces(pieceMap, g);
+		}
+		
+		public void drawCircles(Color c, int r, int x, int y, Graphics g){
+			g.setColor(c);
+			g.fillOval(x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
+		}
+		
+		public void drawPiece(Color c, int x, int y, Graphics g){
+			drawCircles(Color.GRAY, RADIUS, x, y, g);
+			drawCircles(c, RADIUS -3, x, y, g);
+		}
+		
+		public void drawPieces(int[][] pieceMap, Graphics g){
+			// 0 indicates an empty place
+			// 1 indicates a black piece
+			// 2 indicates a white piece	
+			for (int i = 0; i < LENGTH; i ++) {
+				for (int j = 0; j < HEIGHT; j ++) {
+	
+					// calculate the positions on the gameboard
+					int this_x = MARGIN + i * SPACE_BTW_X;
+					int this_y = MARGIN + j * SPACE_BTW_Y;
+	
+					switch(2/*pieceMap[i][j]*/) {			
+						case 0: {
+							// do nothing
+							break;
+						}
+						case 1: {
+							drawPiece(Color.BLACK, this_x, this_y, g);
+							break;
+						}
+						case 2: {
+							drawPiece(Color.WHITE, this_x, this_y, g);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public void mapInitPieces(){
+		//1 = Black piece
+		for(int i = 0; i<2; i++){
+			for(int j = 0; j < LENGTH; j++){
+				pieceMap[j][i] = 1;
+			}
+		}
+		//2 = White piece
+		for(int j = HEIGHT - 1; j > HEIGHT -3; j--){
+			for(int i = 0; i<LENGTH; i++){
+				pieceMap[i][j] = 2;
+			}
+		}
+		// manually set middle row
+		pieceMap[0][2] = 1; pieceMap[2][2] = 1; pieceMap[5][2] = 1; pieceMap[7][2] = 1;
+		pieceMap[1][2] = 2; pieceMap[3][2] = 2; pieceMap[6][2] = 2; pieceMap[8][2] = 2;
+	}
+}
+
+
+
