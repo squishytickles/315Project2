@@ -366,7 +366,9 @@ public class game extends JApplet implements MouseListener{
 		if((lastValid == 1 || lastValid == 2) && (currentValid == 0))
 		{
 			//evaluator!
+			eval(rowIndex, columnIndex, lastValid, lastRow, lastColumn);
 			movePiece(rowIndex, columnIndex, lastRow, lastColumn);
+			
 			System.out.println(rowIndex + " " + columnIndex + " " + lastRow +" "+ lastColumn);
 		}
 		lastValid = pieceMap[rowIndex][columnIndex];
@@ -378,6 +380,82 @@ public class game extends JApplet implements MouseListener{
 	void movePiece(int rowIndex, int columnIndex, int lastRow, int lastColumn){
 		pieceMap[rowIndex][columnIndex] = pieceMap[lastRow][lastColumn];
 		pieceMap[lastRow][lastColumn] = 0;
+	}
+	
+	void eval(int rowIndex, int columnIndex, int lastValid, int lastRow, int lastColumn){
+		//check which players turn it is (black or white)
+		
+		//check valid moves
+		
+		//Remove opponent pieces after move 
+		if(lastValid == 1){
+			//moved up
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow-1][lastColumn]){
+				for(int i = rowIndex-1; i >= 0; --i){
+					if(pieceMap[i][columnIndex] == 2){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+			//moved down
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow+1][lastColumn] ){
+				for(int i = rowIndex+1; i < 5; ++i){
+					if(pieceMap[i][columnIndex] == 2){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}	
+			//moved right
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn+1] ){
+				for(int i = columnIndex+1; i < 9; ++i){
+					if(pieceMap[rowIndex][i] == 2){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+			//moved left 
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn-1]){
+				for(int i = columnIndex-1; i >= 0; --i){
+					if(pieceMap[rowIndex][i] == 2){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+		}
+		if(lastValid == 2){
+			//moved up
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow-1][lastColumn]){
+				for(int i = rowIndex-1; i >= 0; --i){
+					if(pieceMap[i][columnIndex] == 1){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+			//moved down
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow+1][lastColumn] ){
+				for(int i = rowIndex+1; i < 5; ++i){
+					if(pieceMap[i][columnIndex] == 1){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}	
+			//moved right
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn+1] ){
+				for(int i = columnIndex+1; i < 9; ++i){
+					if(pieceMap[rowIndex][i] == 1){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+			//moved left 
+			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn-1]){
+				for(int i = columnIndex-1; i >= 0; --i){
+					if(pieceMap[rowIndex][i] == 1){
+						pieceMap[i][columnIndex] = 0;
+					}
+				}
+			}
+		}
 	}
 }
 
