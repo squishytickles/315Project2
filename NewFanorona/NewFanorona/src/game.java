@@ -1,14 +1,17 @@
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
+//import org.javatuples.Pair;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class game extends JApplet{
+public class game extends JApplet implements MouseListener{
 
 	JPanel content;
 	private MainPanel mainWin;
@@ -21,7 +24,7 @@ public class game extends JApplet{
 	
 	static final int LENGTH = 9;
 	static final int HEIGHT = 5;
-	public int[][] pieceMap = new int[LENGTH][HEIGHT];
+	public int[][] pieceMap = new int[HEIGHT][LENGTH];
 	
 	static final int RADIUS = 15;
 	static final int SPACE_BTW_X = 81;
@@ -47,6 +50,8 @@ public class game extends JApplet{
 		mainWin = new MainPanel(content);
 		instrWin = new InstrPanel(content);
 		gameWin = new GamePanel(content);
+		
+		gameWin.addMouseListener(this);
 		
 		content.add(mainWin, "Main Menu");
 		content.add(instrWin, "Instructions");
@@ -218,6 +223,7 @@ public class game extends JApplet{
 			add(back);
 			add(hint);
 			add(reset);	
+			
 		}
 		
 		//method used with repaint() in GamePanel to draw compenents on the screen
@@ -231,13 +237,15 @@ public class game extends JApplet{
 		//method used to draw a circle
 		public void drawCircle(Color c, int r, int x, int y, Graphics g){
 			g.setColor(c);
-			g.fillOval(x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
+			g.fillOval(x - r, y - r, r * 2, r * 2);
 		}
 		
 		//method used to draw pieces (calls drawCricle twice, one make a border, once to fill B/W)
 		public void drawPiece(Color c, int x, int y, Graphics g){
-			drawCircle(Color.GRAY, RADIUS, x, y, g);
-			drawCircle(c, RADIUS -3, x, y, g);
+			drawCircle(Color.BLACK, RADIUS, x, y, g);
+			repaint();
+			drawCircle(c, RADIUS - 2, x, y, g);
+			repaint();
 		}
 		
 		//draw all the pieces on the board
@@ -245,18 +253,14 @@ public class game extends JApplet{
 			// 0 indicates an empty place
 			// 1 indicates a black piece
 			// 2 indicates a white piece	
-			for (int i = 0; i < LENGTH; i ++) {
-				for (int j = 0; j < HEIGHT; j ++) {
+			for (int i = 0; i < 9; i ++) {
+				for (int j = 0; j < 5; j ++) {
 	
 					// calculate the positions on the gameboard
 					int this_x = MARGIN + (i * SPACE_BTW_X);
 					int this_y = MARGIN + (j * SPACE_BTW_Y);
 	
-					switch(pieceMap[i][j]) {			
-						case 0: {
-							drawPiece(Color.GREEN, this_x, this_y, g);
-						}
-						break;
+					switch(pieceMap[j][i]) {			
 						case 1: {
 							drawPiece(Color.BLACK, this_x, this_y, g);
 						}
@@ -273,25 +277,86 @@ public class game extends JApplet{
 
 	//maps where each game piece will go initially
 	public void mapInitPieces(){
+		
 		// map top 2 rows as 1
-		for (int j = 0; j < 2; j ++){
-			for (int i = 0; i < LENGTH; i ++){
+		for (int i = 0; i < 2; ++i){
+			for (int j = 0; j < LENGTH; ++j){
 				pieceMap[i][j] = 1;
 			}
 		}
-
-		// map bottom 2 rows as 2
-		for (int j = HEIGHT - 1; j > HEIGHT - 3; j --){
-			for (int i = 0; i < LENGTH; i ++){
+		
+		// map bottom 2 rows as 2		
+		for (int i = 4; i > 2; --i){
+			for (int j = 0; j < LENGTH; ++j){
 				pieceMap[i][j] = 2;
 			}
-		}
+		}	
 
 		// manually set middle row
-		pieceMap[0][2] = 1; pieceMap[2][2] = 1; pieceMap[5][2] = 1; pieceMap[7][2] = 1;
-		pieceMap[1][2] = 2; pieceMap[3][2] = 2; pieceMap[6][2] = 2; pieceMap[8][2] = 2;
+		pieceMap[2][0] = 1; pieceMap[2][2] = 1; pieceMap[2][5] = 1; pieceMap[2][7] = 1;
+		pieceMap[2][1] = 2; pieceMap[2][3] = 2; pieceMap[2][6] = 2; pieceMap[2][8] = 2;
+		
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+		Point currentPosition = MouseInfo.getPointerInfo().getLocation();
+		SwingUtilities.convertPointFromScreen(currentPosition, e.getComponent());
+		
+		double xMin = currentPosition.getX() - 30;
+		double xMax = currentPosition.getX() + 30;
+		double yMin = currentPosition.getY() - 30;
+		double yMax = currentPosition.getY() + 30;
+		
+		int pieceX = 0;
+		int pieceY = 0;
+		
+		for (int i = 0; i < 9; i ++) {
+			for (int j = 0; j < 5; j ++) {
+
+				int this_x = MARGIN + (i * SPACE_BTW_X);
+				int this_y = MARGIN + (j * SPACE_BTW_Y);
+				
+				if((this_x < xMax) && (this_x > xMin)){
+					pieceX = i;			
+				}
+				if((this_y < yMax) && (this_y > yMin)){			
+					pieceY = j;
+				}	
+			}
+		}
+		
+		pieceMap[pieceY][pieceX] = 0;
+		
 	}
 }
+
 
 
 
