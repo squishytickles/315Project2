@@ -31,8 +31,8 @@ public class game extends JApplet implements MouseListener{
 	static final int SPACE_BTW_Y = 87;
 	static final int MARGIN = 50;
 	int lastValid = 0;
-	int lastX =0;
-	int lastY =0;
+	int lastRow = 0;
+	int lastColumn = 0;
 
 	Graphics g;
 
@@ -250,7 +250,7 @@ public class game extends JApplet implements MouseListener{
 			drawCircle(c, RADIUS - 2, x, y, g);
 			repaint();
 		}
-
+		
 		//draw all the pieces on the board
 		public void drawPieces(int[][] pieceMap, Graphics g){
 			// 0 indicates an empty place
@@ -269,6 +269,10 @@ public class game extends JApplet implements MouseListener{
 						}
 						break;
 						case 2: {
+							drawPiece(Color.WHITE, this_x, this_y, g);
+						}
+						break;
+						case 3: {
 							drawPiece(Color.WHITE, this_x, this_y, g);
 						}
 						break;
@@ -298,6 +302,7 @@ public class game extends JApplet implements MouseListener{
 		// manually set middle row
 		pieceMap[2][0] = 1; pieceMap[2][2] = 1; pieceMap[2][5] = 1; pieceMap[2][7] = 1;
 		pieceMap[2][1] = 2; pieceMap[2][3] = 2; pieceMap[2][6] = 2; pieceMap[2][8] = 2;
+		pieceMap[2][4] = 0;
 
 	}
 
@@ -327,7 +332,6 @@ public class game extends JApplet implements MouseListener{
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
 
 		Point currentPosition = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(currentPosition, e.getComponent());
@@ -337,45 +341,43 @@ public class game extends JApplet implements MouseListener{
 		double yMin = currentPosition.getY() - 30;
 		double yMax = currentPosition.getY() + 30;
 
-		int pieceX = 0;
-		int pieceY = 0;
-		
-		int currentValid = 0;
+		int rowIndex = 0;
+		int columnIndex = 0;
 
-		for (int i = 0; i < 9; i ++) {
-			for (int j = 0; j < 5; j ++) {
+		for (int i = 0; i < 9; ++i) {
+			for (int j = 0; j < 5; ++j) {
 
 				int this_x = MARGIN + (i * SPACE_BTW_X);
 				int this_y = MARGIN + (j * SPACE_BTW_Y);
 
 				if((this_x < xMax) && (this_x > xMin)){
-					pieceX = i;			
+					columnIndex = i;			
 				}
 				if((this_y < yMax) && (this_y > yMin)){			
-					pieceY = j;
+					rowIndex = j;
 				}	
 			}
 		}
 		
-		currentValid = pieceMap[pieceX][pieceY];
-		System.out.println("Last valid: " + lastValid);
-		System.out.println("Current valid: " + currentValid);
+		int currentValid = pieceMap[rowIndex][columnIndex];
+		System.out.println("Last valid: " + lastValid + " (" + lastRow + "," + lastColumn + ")");
+		System.out.println("Current valid: " + currentValid + " (" + rowIndex + "," + columnIndex + ")");
 		
 		if((lastValid == 1 || lastValid == 2) && (currentValid == 0))
 		{
 			//evaluator!
-			movePiece(pieceX, pieceY, lastX, lastY);
-			System.out.println(pieceX + " " + pieceY + " " + lastX +" "+ lastY);
+			movePiece(rowIndex, columnIndex, lastRow, lastColumn);
+			System.out.println(rowIndex + " " + columnIndex + " " + lastRow +" "+ lastColumn);
 		}
-		lastValid = pieceMap[pieceY][pieceX];
-		lastX = pieceX;
-		lastY = pieceY;
+		lastValid = pieceMap[rowIndex][columnIndex];
+		lastRow = rowIndex;
+		lastColumn = columnIndex;
 		
 	}
 	
-	void movePiece(int x, int y, int lastx, int lasty){
-		pieceMap[x][y] = pieceMap[lastx][lasty];
-		pieceMap[lastx][lasty] = 0;
+	void movePiece(int rowIndex, int columnIndex, int lastRow, int lastColumn){
+		pieceMap[rowIndex][columnIndex] = pieceMap[lastRow][lastColumn];
+		pieceMap[lastRow][lastColumn] = 0;
 	}
 }
 
