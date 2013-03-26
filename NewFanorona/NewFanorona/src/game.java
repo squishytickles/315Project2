@@ -23,9 +23,9 @@ public class game extends JApplet implements MouseListener{
 	static final int MAIN_HEIGHT = 450;
 	static final int SPEED = 100;
 
-	static final int LENGTH = 9;
-	static final int HEIGHT = 5;
-	public int[][] pieceMap = new int[HEIGHT][LENGTH];
+	static int BOARD_LENGTH = 9;
+	static int BOARD_HEIGHT = 5;
+	public int[][] pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
 
 	static final int RADIUS = 15;
 	static final int SPACE_BTW_X = 81;
@@ -179,6 +179,10 @@ public class game extends JApplet implements MouseListener{
 		private JButton back;
 		private JButton reset;
 		private JButton hint;
+		
+		private JLabel turn;
+		private JLabel moves;
+		private JLabel invalid;
 
 		private BufferedImage gameBoard;
 
@@ -193,11 +197,13 @@ public class game extends JApplet implements MouseListener{
 			hint = new JButton("Hint");
 
 			//import game board image
+			/*
 			try {
 				gameBoard = ImageIO.read(new File("img/gameboard.png"));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+			*/
 
 			//set button action to go back to main menu
 			back.addActionListener( new ActionListener()
@@ -233,14 +239,29 @@ public class game extends JApplet implements MouseListener{
 			add(back);
 			add(hint);
 			add(reset);	
-
 		}
 
 		//method used with repaint() in GamePanel to draw compenents on the screen
 		public void paintComponent(Graphics g)
 		{
 			super.paintComponent(g);
-			g.drawImage(gameBoard, 0, 0, null);
+			int x = 0;
+			int y = 0;
+			
+			//draw horizontal lines
+			for(int i = 0; i < BOARD_HEIGHT; i++){
+				g.drawLine(50, 50+(i*SPACE_BTW_Y), (MAIN_WIDTH-MARGIN), 50+(i*SPACE_BTW_Y));
+			}
+			
+			//draw vertical lines
+			for(int i = 0; i < BOARD_LENGTH; i++){
+				g.drawLine(50+(i*SPACE_BTW_X), 50, MARGIN+(i*SPACE_BTW_X), MAIN_HEIGHT-MARGIN);
+			}
+			
+			//draw diagonal lines
+			//WORKING ON IT...
+			
+			//draw pieces
 			drawPieces(pieceMap, g);
 		}
 
@@ -263,7 +284,7 @@ public class game extends JApplet implements MouseListener{
 			// 0 indicates an empty place
 			// 1 indicates a black piece
 			// 2 indicates a white piece	
-			for (int i = 0; i < 9; i ++) {
+			for (int i = 0; i < BOARD_LENGTH; i ++) {
 				for (int j = 0; j < 5; j ++) {
 
 					// calculate the positions on the gameboard
@@ -294,14 +315,14 @@ public class game extends JApplet implements MouseListener{
 
 		// map top 2 rows as 1
 		for (int i = 0; i < 2; ++i){
-			for (int j = 0; j < LENGTH; ++j){
+			for (int j = 0; j < BOARD_LENGTH; ++j){
 				pieceMap[i][j] = 1;
 			}
 		}
 
 		// map bottom 2 rows as 2		
 		for (int i = 4; i > 2; --i){
-			for (int j = 0; j < LENGTH; ++j){
+			for (int j = 0; j < BOARD_LENGTH; ++j){
 				pieceMap[i][j] = 2;
 			}
 		}	
@@ -391,13 +412,11 @@ public class game extends JApplet implements MouseListener{
 	}
 	
 	Boolean validMove(int secondRow, int secondColumn){
-		
 		//check that the correct color is trying to move
 		int currentColor = pieceMap[firstRow][firstColumn];
 		
 		if(movesMade > 0) {
 			if(currentColor == gameMoves[movesMade-1].color) {
-				System.out.println("NOT YOUR TURN!");
 				return false;
 			}
 		} else {
@@ -961,8 +980,3 @@ public class game extends JApplet implements MouseListener{
 		
 	}
 }
-
-
-
-
-
