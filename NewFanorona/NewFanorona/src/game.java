@@ -19,23 +19,21 @@ public class game extends JApplet implements MouseListener{
 	private InstrPanel instrWin;
 	private GamePanel gameWin;
 
-	static final int MAIN_WIDTH = 750;
-	static final int MAIN_HEIGHT = 450;
-	static final int SPEED = 100;
-
 	static int BOARD_LENGTH = 9;
 	static int BOARD_HEIGHT = 5;
-	public int[][] pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
+	static final int SPACE_BTWN = 80;
+	static final int MARGIN = 80;
 
+	static int WIN_LENGTH = (BOARD_LENGTH*SPACE_BTWN) + MARGIN;
+	static int WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
+	
 	static final int RADIUS = 15;
-	static final int SPACE_BTW_X = 81;
-	static final int SPACE_BTW_Y = 87;
-	static final int MARGIN = 50;
 	
 	int firstValid = 0;
 	int firstRow = 0;
 	int firstColumn = 0;
 	
+	public int[][] pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
 	public pieceMove[] gameMoves = new pieceMove[50];
 	public pieceMove newMove = new pieceMove(0, 0, "NONE", 0);
 	int movesMade = 0;
@@ -50,7 +48,7 @@ public class game extends JApplet implements MouseListener{
 	{
 		//create main menu window
 		JFrame mainMenu = new JFrame("FANORONA");
-		mainMenu.setSize(MAIN_WIDTH, MAIN_HEIGHT);
+		mainMenu.setSize(WIN_LENGTH, WIN_HEIGHT);
 		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel content = new JPanel();
@@ -90,7 +88,7 @@ public class game extends JApplet implements MouseListener{
 			text = new JLabel("Welcome to Fanorona");
 
 			//set size of main window
-			setPreferredSize(new Dimension(750, 450));
+			setPreferredSize(new Dimension(WIN_LENGTH, WIN_HEIGHT));
 			this.setLayout(new FlowLayout());
 
 			//create buttons
@@ -147,7 +145,6 @@ public class game extends JApplet implements MouseListener{
 
 			//set size of window
 			setLayout(new FlowLayout());
-			setPreferredSize(new Dimension(750,450));
 
 			//create instructions text
 			instr = new JLabel("<html>INSTRUCTIONS: <br><html>" 
@@ -179,19 +176,13 @@ public class game extends JApplet implements MouseListener{
 		private JButton back;
 		private JButton reset;
 		private JButton hint;
-		
-		private JLabel turn;
-		private JLabel moves;
-		private JLabel invalid;
-
-		private BufferedImage gameBoard;
 
 		//create the GamePanel
 		public GamePanel(JPanel mainWin) {
 			content = mainWin;
 
 			this.setLayout(new FlowLayout());
-			setPreferredSize(new Dimension(750,450));
+			setPreferredSize(new Dimension(WIN_LENGTH, WIN_HEIGHT));
 			back = new JButton("Back");
 			reset = new JButton("Restart");
 			hint = new JButton("Hint");
@@ -241,25 +232,51 @@ public class game extends JApplet implements MouseListener{
 			add(reset);	
 		}
 
-		//method used with repaint() in GamePanel to draw compenents on the screen
+		//method used with repaint() in GamePanel to draw components on the screen
 		public void paintComponent(Graphics g)
 		{
 			super.paintComponent(g);
-			int x = 0;
-			int y = 0;
 			
 			//draw horizontal lines
 			for(int i = 0; i < BOARD_HEIGHT; i++){
-				g.drawLine(50, 50+(i*SPACE_BTW_Y), (MAIN_WIDTH-MARGIN), 50+(i*SPACE_BTW_Y));
+				g.drawLine(MARGIN, MARGIN+(i*SPACE_BTWN), WIN_LENGTH-MARGIN, MARGIN+(i*SPACE_BTWN));
 			}
 			
 			//draw vertical lines
 			for(int i = 0; i < BOARD_LENGTH; i++){
-				g.drawLine(50+(i*SPACE_BTW_X), 50, MARGIN+(i*SPACE_BTW_X), MAIN_HEIGHT-MARGIN);
+				g.drawLine(MARGIN+(i*SPACE_BTWN), MARGIN, MARGIN+(i*SPACE_BTWN),BOARD_HEIGHT*SPACE_BTWN);
 			}
 			
-			//draw diagonal lines
-			//WORKING ON IT...
+			//draw diagonal lines from top (negative sloping ones)
+			for(int i = 0; i < BOARD_LENGTH; i++){
+				int from_x = MARGIN + (i*SPACE_BTWN);
+				int from_y = MARGIN;
+				int to_x = from_x;
+				int to_y = from_y;
+				
+				while(to_x < (BOARD_LENGTH*SPACE_BTWN) && to_y < (BOARD_HEIGHT*SPACE_BTWN)){
+					to_x += SPACE_BTWN;
+					to_y += SPACE_BTWN;
+					if(i%2 == 0)
+						g.drawLine(from_x, from_y, to_x, to_y);
+				}
+			}
+			
+			//draw diagonal lines from top (positive sloping ones)
+			for(int i = 0; i < BOARD_LENGTH; i++){
+				int from_x = MARGIN + (i*SPACE_BTWN);
+				int from_y = ((BOARD_HEIGHT-1)*SPACE_BTWN)+MARGIN;
+				
+				int to_x = from_x;
+				int to_y = from_y;
+				
+				while(to_x < (BOARD_LENGTH*SPACE_BTWN) && to_y-SPACE_BTWN> 0){
+					to_x += SPACE_BTWN;
+					to_y -= SPACE_BTWN;
+					if(i%2 == 0)
+						g.drawLine(from_x, from_y, to_x, to_y);
+				}
+			}
 			
 			//draw pieces
 			drawPieces(pieceMap, g);
@@ -288,16 +305,16 @@ public class game extends JApplet implements MouseListener{
 				for (int j = 0; j < 5; j ++) {
 
 					// calculate the positions on the gameboard
-					int this_x = MARGIN + (i * SPACE_BTW_X);
-					int this_y = MARGIN + (j * SPACE_BTW_Y);
+					int this_x = MARGIN + (i * SPACE_BTWN);
+					int this_y = MARGIN + (j * SPACE_BTWN);
 
 					switch(pieceMap[j][i]) {			
 						case 1: {
-							drawPiece(Color.BLACK, this_x, this_y, g);
+							drawPiece(Color.WHITE, this_x, this_y, g);
 						}
 						break;
 						case 2: {
-							drawPiece(Color.WHITE, this_x, this_y, g);
+							drawPiece(Color.BLACK, this_x, this_y, g);
 						}
 						break;
 						case 3: {
@@ -376,8 +393,8 @@ public class game extends JApplet implements MouseListener{
 		for (int i = 0; i < 9; ++i) {
 			for (int j = 0; j < 5; ++j) {
 
-				int this_x = MARGIN + (i * SPACE_BTW_X);
-				int this_y = MARGIN + (j * SPACE_BTW_Y);
+				int this_x = MARGIN + (i * SPACE_BTWN);
+				int this_y = MARGIN + (j * SPACE_BTWN);
 
 				if((this_x < xMax) && (this_x > xMin)){
 					secondColumn = i;			
@@ -980,3 +997,8 @@ public class game extends JApplet implements MouseListener{
 		
 	}
 }
+
+
+
+
+
