@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -30,9 +31,14 @@ public class game extends JApplet implements MouseListener{
 	static final int SPACE_BTW_X = 81;
 	static final int SPACE_BTW_Y = 87;
 	static final int MARGIN = 50;
-	int lastValid = 0;
-	int lastRow = 0;
-	int lastColumn = 0;
+	
+	int firstValid = 0;
+	int firstRow = 0;
+	int firstColumn = 0;
+	
+	public pieceMove[] gameMoves = new pieceMove[50];
+	public pieceMove newMove = new pieceMove(0, 0, "NONE", 0);
+	int movesMade = 0;
 
 	Graphics g;
 
@@ -208,7 +214,9 @@ public class game extends JApplet implements MouseListener{
 	        {
 	            public void actionPerformed(ActionEvent e)
 	            {
-	               repaint();
+	            	movesMade = 0;
+	            	gameMoves[movesMade].color = 1;
+	                mapInitPieces();
 	            }
 	        });
 
@@ -220,8 +228,7 @@ public class game extends JApplet implements MouseListener{
 	              //
 	            }
 	        });
-
-
+			
 			repaint();
 			add(back);
 			add(hint);
@@ -341,9 +348,10 @@ public class game extends JApplet implements MouseListener{
 		double yMin = currentPosition.getY() - 30;
 		double yMax = currentPosition.getY() + 30;
 
-		int rowIndex = 0;
-		int columnIndex = 0;
+		int secondRow = 0;
+		int secondColumn = 0;
 
+		//obtain array row and column values for click position
 		for (int i = 0; i < 9; ++i) {
 			for (int j = 0; j < 5; ++j) {
 
@@ -351,111 +359,606 @@ public class game extends JApplet implements MouseListener{
 				int this_y = MARGIN + (j * SPACE_BTW_Y);
 
 				if((this_x < xMax) && (this_x > xMin)){
-					columnIndex = i;			
+					secondColumn = i;			
 				}
 				if((this_y < yMax) && (this_y > yMin)){			
-					rowIndex = j;
+					secondRow = j;
 				}	
 			}
 		}
 		
-		int currentValid = pieceMap[rowIndex][columnIndex];
-		System.out.println("Last valid: " + lastValid + " (" + lastRow + "," + lastColumn + ")");
-		System.out.println("Current valid: " + currentValid + " (" + rowIndex + "," + columnIndex + ")");
+		int currentValid = pieceMap[secondRow][secondColumn];	
 		
-		if((lastValid == 1 || lastValid == 2) && (currentValid == 0))
+		//only move if second space clicked on was empty
+		if((firstValid == 1 || firstValid == 2) && (currentValid == 0))
 		{
-			//evaluator!
-			eval(rowIndex, columnIndex, lastValid, lastRow, lastColumn);
-			movePiece(rowIndex, columnIndex, lastRow, lastColumn);
+			gameMoves[movesMade] = newMove;
+				
+			if((movesMade == 0) || (gameMoves[movesMade].color == 1)) {
+				if(validMove(secondRow, secondColumn)) {
+					movePiece(secondRow, secondColumn);
+				}
+				evalBoard();
+			} else {
+				computerMove();	//***needs to be relocated
+				evalBoard();
+			}
+		}
+		firstValid = pieceMap[secondRow][secondColumn];
+		firstRow = secondRow;
+		firstColumn = secondColumn;
+		
+	}
+	
+	Boolean validMove(int secondRow, int secondColumn){
+		
+		//check that the correct color is trying to move
+		int currentColor = pieceMap[firstRow][firstColumn];
+		
+		if(movesMade > 0) {
+			if(currentColor == gameMoves[movesMade-1].color) {
+				System.out.println("NOT YOUR TURN!");
+				return false;
+			}
+		} else {
+			if(currentColor == 1) {
+				System.out.println("NOT YOUR TURN!");
+				return false;
+			}
+		}
+		
+		//SWEST
+		if((secondRow == (firstRow + 1)) && (secondColumn == (firstColumn - 1))) {
 			
-			System.out.println(rowIndex + " " + columnIndex + " " + lastRow +" "+ lastColumn);
+			//check that line is available to move along
+			if(!linePresent(firstRow, firstColumn)) {
+				System.out.println("INVALID MOVE!");
+				return false;
+			}
+			
+			//check that last move wasn't in same direction
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "SWEST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;
+				}
+			}
+			gameMoves[movesMade].setDirection("SWEST");
+			
+			//determine whether requested move is valid/invalid
+			//act differently based on whether or not piece is moved to outer edge of array (due to out of bounds errors)
+			if((firstRow == 4) || (firstColumn == 0)) {
+				if((pieceMap[secondRow + 1][secondColumn - 1] == 0) || (pieceMap[secondRow + 1][secondColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;					
+				}
+			} else if((secondRow == 0) || (secondColumn == 8)) {
+				if((pieceMap[firstRow - 1][firstColumn + 1] == 0) || (pieceMap[firstRow - 1][firstColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;					
+				}
+			} else if(((pieceMap[secondRow + 1][secondColumn - 1] == 0) || (pieceMap[secondRow + 1][secondColumn - 1] == currentColor))			
+			         && ((pieceMap[firstRow - 1][firstColumn + 1] == 0) || (pieceMap[firstRow - 1][firstColumn + 1] == currentColor))) {
+				System.out.println("INVALID MOVE!");
+				return false;
+			}
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			//start removing other teams pieces
+			int i = secondRow+1;
+			int j = secondColumn-1;
+			while((i <= 4) && (j >= 0) && (pieceMap[i][j] != currentColor) && (pieceMap[i][j] != 0)) {
+				pieceMap[i][j] = 0;
+				++i;--j;
+			}	
+			int k = firstRow-1;
+			int z = firstColumn+1;
+			while((k >= 0) && (z <= 8) && (pieceMap[k][z] != currentColor) && (pieceMap[k][z] != 0)) {
+				pieceMap[k][z] = 0;
+				--k;++z;
+			}	
+			return true;
 		}
-		lastValid = pieceMap[rowIndex][columnIndex];
-		lastRow = rowIndex;
-		lastColumn = columnIndex;
+			
+		//SEAST
+		if((secondRow == (firstRow + 1)) && (secondColumn == (firstColumn + 1))) {
+			
+			//check that line is available to move along
+			if(!linePresent(firstRow, firstColumn)) {
+				System.out.println("INVALID MOVE!");
+				return false;
+			}
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "SEAST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("SEAST");
+
+			//determine whether requested move is valid/invalid
+			//act differently based on whether or not piece is moved to outer edge of array (due to out of bounds errors)
+			if((firstRow == 0) || (firstColumn == 0)) {
+				if((pieceMap[secondRow + 1][secondColumn + 1] == 0) || (pieceMap[secondRow + 1][secondColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if((secondRow == 4) || (secondColumn == 8)) {
+				if((pieceMap[firstRow - 1][firstColumn - 1] == 0) || (pieceMap[firstRow - 1][firstColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if(((pieceMap[secondRow + 1][secondColumn + 1] == 0) || (pieceMap[secondRow + 1][secondColumn + 1] == currentColor)) 
+			         && ((pieceMap[firstRow - 1][firstColumn - 1] == 0) || (pieceMap[firstRow - 1][firstColumn - 1] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			} 
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			//start removing other teams pieces
+			int i = secondRow+1;
+			int j = secondColumn+1;
+			while((i <= 4) && (j <= 8) && (pieceMap[i][j] != currentColor) && (pieceMap[i][j] != 0)) {
+				pieceMap[i][j] = 0;						
+				++i;++j;					
+			}	
+			int k = firstRow-1;
+			int z = firstColumn-1;
+			while((k >= 0) && (z >= 0) && (pieceMap[k][z] != currentColor) && (pieceMap[k][z] != 0)) {
+				pieceMap[k][z] = 0;								
+				--k;--z;					
+			}
+			return true;
+		}
+			
+		//NWEST
+		if((secondRow == (firstRow - 1)) && (secondColumn == (firstColumn - 1))) {
+			
+			//check that line is available to move along
+			if(!linePresent(firstRow, firstColumn)) {
+				System.out.println("INVALID MOVE!");
+				return false;
+			}
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "NWEST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("NWEST");
+
+			//determine whether requested move is valid/invalid
+			//act differently based on whether or not piece is moved to outer edge of array (due to out of bounds errors)
+			if((firstRow == 4) || (firstColumn == 8)) {
+				if((pieceMap[secondRow - 1][secondColumn - 1] == 0) || (pieceMap[secondRow - 1][secondColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if((secondRow == 0) || (secondColumn == 0)) {
+				if((pieceMap[firstRow + 1][firstColumn + 1] == 0) || (pieceMap[firstRow + 1][firstColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if(((pieceMap[secondRow - 1][secondColumn - 1] == 0) || (pieceMap[secondRow - 1][secondColumn - 1] == currentColor)) 
+			         && ((pieceMap[firstRow + 1][firstColumn + 1] == 0) || (pieceMap[firstRow + 1][firstColumn + 1] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			}
+				
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			//start removing other teams pieces
+			int i = secondRow-1;
+			int j = secondColumn-1;
+			while((i >= 0) && (j >= 0) && (pieceMap[i][j] != currentColor) && (pieceMap[i][j] != 0)) {
+				pieceMap[i][j] = 0;							
+				--i;--j;					
+			}				
+			int k = firstRow+1;
+			int z = firstColumn+1;
+			while((k <= 4) && (z <= 8) && (pieceMap[k][z] != currentColor) && (pieceMap[k][z] != 0)) {
+				pieceMap[k][z] = 0;								
+				++k;++z;										
+			}
+			return true;
+		}
+			
+		//NEAST
+		if((secondRow == (firstRow - 1)) && (secondColumn == (firstColumn + 1))) {
+
+			//check that line is available to move along
+			if(!linePresent(firstRow, firstColumn)) {
+				System.out.println("INVALID MOVE!");
+				return false;
+			}
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "NEAST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("NEAST");
+			
+			//determine whether requested move is valid/invalid
+			//act differently based on whether or not piece is moved to outer edge of array (due to out of bounds errors)
+			if((firstRow == 4) || (firstColumn == 0)) {
+				if((pieceMap[secondRow - 1][secondColumn + 1] == 0) || (pieceMap[secondRow - 1][secondColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}	
+			} else if ((secondRow == 0) || (secondColumn == 8)) {
+				if((pieceMap[firstRow + 1][firstColumn - 1] == 0) || (pieceMap[firstRow + 1][firstColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if(((pieceMap[secondRow - 1][secondColumn + 1] == 0) || (pieceMap[secondRow - 1][secondColumn + 1] == currentColor)) 
+			         && ((pieceMap[firstRow + 1][firstColumn - 1] == 0) || (pieceMap[firstRow + 1][firstColumn - 1] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			}
+			//FIX ME
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			System.out.println("++++" + secondRow + secondColumn + pieceMap[secondRow][secondColumn]);
+			//start removing other teams pieces
+			int i = secondRow-1;
+			int j = secondColumn+1;
+			while((i >= 0) && (j <= 8) && (pieceMap[i][j] != currentColor) && (pieceMap[i][j] != 0)) {
+				pieceMap[i][j] = 0;								
+				--i;++j;					
+			}	
+			int k = firstRow+1;
+			int z = firstColumn-1;
+			while((k <= 4) && (z >= 0) && (pieceMap[k][z] != currentColor) && (pieceMap[k][z] != 0)) {
+				pieceMap[k][z] = 0;							
+				++k;--z;					
+			}
+			return true;
+		}
+			
+		//SOUTH
+		if((secondRow == (firstRow + 1)) && (secondColumn == firstColumn)) {
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "SOUTH" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("SOUTH");
+			
+			
+			//determine whether requested move is valid/invalid
+			//act differently based on whether or not piece is moved to outer edge of array (due to out of bounds errors)
+			if(secondRow == 4) {
+				if((pieceMap[firstRow - 1][firstColumn] == 0) || (pieceMap[firstRow - 1][firstColumn] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;					
+				}
+				
+			} else if(firstRow == 0) {
+				if((pieceMap[secondRow + 1][secondColumn] == 0) || (pieceMap[secondRow + 1][secondColumn] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;					
+				}
+				
+			} else if(((pieceMap[secondRow + 1][secondColumn] == 0) || (pieceMap[secondRow + 1][secondColumn] == currentColor)) 
+			         && ((pieceMap[firstRow - 1][firstColumn] == 0) || (pieceMap[firstRow - 1][firstColumn] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			}
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+				
+			//start removing other teams pieces
+			for(int i = secondRow+1; (i <= 4) && (pieceMap[i][secondColumn] != currentColor) && (pieceMap[i][secondColumn] != 0); ++i) {
+				pieceMap[i][secondColumn] = 0;
+			}
+			for(int i = firstRow - 1; (i >= 0) && (pieceMap[i][secondColumn] != currentColor) && (pieceMap[i][secondColumn] != 0); --i) {
+				pieceMap[i][secondColumn] = 0;
+			}
+			return true;
+		}
+		
+		//NORTH
+		if((secondRow == (firstRow - 1)) && (secondColumn == firstColumn)) {
+			
+			if(movesMade >0) {
+				if((gameMoves[movesMade-1].direction == "NORTH") && (gameMoves[movesMade-1].destRow == firstRow) && (gameMoves[movesMade-1].destColumn == firstColumn)) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("NORTH");
+			
+			if(secondRow == 0) {
+				if((pieceMap[firstRow + 1][firstColumn] == 0) || (pieceMap[firstRow + 1][firstColumn] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;					
+				}
+				
+			} else if(firstRow == 4) {
+				if((pieceMap[secondRow - 1][secondColumn] == 0) || (pieceMap[secondRow - 1][secondColumn] == currentColor)) {		
+					System.out.println("INVALID MOVE!");
+					return false;
+				}
+			} else if(((pieceMap[secondRow - 1][secondColumn] == 0) || (pieceMap[secondRow - 1][secondColumn] == currentColor)) 
+		             && ((pieceMap[firstRow + 1][firstColumn] == 0) || (pieceMap[firstRow + 1][firstColumn] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;	
+				
+			}
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+
+			//start removing other teams pieces
+			for(int i = secondRow-1; (i >= 0) && (pieceMap[i][secondColumn] != currentColor) && (pieceMap[i][secondColumn] != 0); --i) {
+				pieceMap[i][secondColumn] = 0;
+			}
+			for(int i = firstRow + 1; (i <= 4) && (pieceMap[i][secondColumn] != currentColor) && (pieceMap[i][secondColumn] != 0); ++i) {				
+				pieceMap[i][secondColumn] = 0;
+			}
+			return true;
+		}
+			
+		//EAST
+		if((secondRow == firstRow) && (secondColumn == (firstColumn + 1))) {
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "EAST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("EAST");
+			
+			if(firstColumn == 0) {
+				if((pieceMap[secondRow][secondColumn + 1] == 0) || (pieceMap[secondRow][secondColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;							
+				}
+			} else if(secondColumn == 8) {
+				if((pieceMap[firstRow][firstColumn - 1] == 0) || (pieceMap[firstRow][firstColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;							
+				}
+			} else if(((pieceMap[secondRow][secondColumn + 1] == 0) || (pieceMap[secondRow][secondColumn + 1] == currentColor)) 
+			         && ((pieceMap[firstRow][firstColumn - 1] == 0) || (pieceMap[firstRow][firstColumn - 1] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			}
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			//start removing other teams pieces
+			for(int i = secondColumn+1; (i <= 8) && (pieceMap[secondRow][i] != currentColor) && (pieceMap[secondRow][i] != 0); ++i) {		
+				pieceMap[secondRow][i] = 0;
+			}
+			for(int i = firstColumn - 1; (i >= 0) && (pieceMap[secondRow][i] != currentColor) && (pieceMap[secondRow][i] != 0); --i) {		
+				pieceMap[secondRow][i] = 0;
+			}
+			return true;
+		}
+			
+		//WEST
+		if((secondRow == firstRow) && (secondColumn == (firstColumn - 1))) {
+			
+			if(movesMade >0) {
+				if(gameMoves[movesMade-1].direction == "WEST" && (gameMoves[movesMade-1].destRow == (firstRow + 1) && (gameMoves[movesMade-1].destColumn == (firstColumn - 1)))) {
+					System.out.println("CANT MOVE SAME DIRECTION!");
+					return false;				
+				}
+			}
+			gameMoves[movesMade].setDirection("WEST");
+			
+			if(firstColumn == 8) {
+				if((pieceMap[secondRow][secondColumn - 1] == 0) || (pieceMap[secondRow][secondColumn - 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if(secondColumn == 0) {
+				if((pieceMap[firstRow][firstColumn + 1] == 0) || (pieceMap[firstRow][firstColumn + 1] == currentColor)) {
+					System.out.println("INVALID MOVE!");
+					return false;						
+				}
+			} else if(((pieceMap[secondRow][secondColumn - 1] == 0) || (pieceMap[secondRow][secondColumn - 1] == currentColor)) 
+			   && ((pieceMap[firstRow][firstColumn + 1] == 0) || (pieceMap[firstRow][firstColumn + 1] == currentColor))) {		
+				System.out.println("INVALID MOVE!");
+				return false;		
+			}
+			
+			if(pieceMap[secondRow][secondColumn] != 0) {
+				System.out.println("INVALID MOVE!");
+				return false;					
+			}
+			
+			//start removing other teams pieces
+			for(int i = secondColumn-1; (i >= 0) && (pieceMap[secondRow][i] != currentColor) && (pieceMap[secondRow][i] != 0); --i) {
+				pieceMap[secondRow][i] = 0;				
+			}
+			for(int i = firstColumn + 1; (i <= 8) && (pieceMap[secondRow][i] != currentColor) && (pieceMap[secondRow][i] != 0); ++i) {
+				pieceMap[secondRow][i] = 0;				
+			}
+			return true;
+		} else {
+			System.out.println("INVALID MOVE!");
+			return false;	
+		}
+	}
+	
+	void movePiece(int secondRow, int secondColumn){
+		int movingColor = pieceMap[firstRow][firstColumn];
+		pieceMap[secondRow][secondColumn] = movingColor;
+		pieceMap[firstRow][firstColumn] = 0;	
+
+		newMove.setRow(secondRow); 
+		newMove.setColumn(secondColumn);
+		newMove.setColor(movingColor);
+		gameMoves[movesMade] = newMove;
+		
+		//**************Convert to Graphics****************
+		//output information about what colored piece moved last
+		if(gameMoves[movesMade].color == 2) 
+			System.out.println("Last Move: WHITE");
+		else if(gameMoves[movesMade].color == 1)
+			System.out.println("Last Move: BLACK");	
+		
+		movesMade++;
+	}
+	
+	void evalBoard() {
+		
+		int whiteCount = 0;
+		int blackCount = 0;
+		
+		for(int i = 0; i < 5; ++i) {
+			for(int j = 0; j < 9; ++j) {		
+				if(pieceMap[i][j] == 1)
+					blackCount++;
+				else if(pieceMap[i][j] == 2)
+					whiteCount++;
+			}
+		}
+		
+		//**************Convert to Graphics****************
+		//output piece count info for current game
+		System.out.println("WHITE Pieces Remaining: " + whiteCount);
+		System.out.println("BLACK Pieces Remaining: " + blackCount);
+		
+		//**************Convert to Graphics****************
+		//output winning messages
+		if(whiteCount == 0) {
+			System.out.println("BLACK WINS!!!");
+		} else if(blackCount == 0) {
+			System.out.println("WHITE WINS!!!");
+		}
+		
+		//**************Convert to Graphics****************
+		//output draw message
+		if(movesMade == 50)
+			System.out.println("GAME ENDS IN DRAW...");
 		
 	}
 	
-	void movePiece(int rowIndex, int columnIndex, int lastRow, int lastColumn){
-		pieceMap[rowIndex][columnIndex] = pieceMap[lastRow][lastColumn];
-		pieceMap[lastRow][lastColumn] = 0;
+	Boolean linePresent(int row, int col) {
+		
+		if(((row == 0) || (row == 2) || (row == 4)) && ((col == 1) || (col == 3) || (col == 5) || (col == 7))) {
+			return false;
+		}
+		
+		if(((row == 1) || (row == 3)) && ((col == 0) || (col == 2) || (col == 4) || (col == 6) || (col == 8))) {
+			return false;
+		}
+		return true;
+	}
+
+	void computerMove() {
+		
+		//search all cardinal directions around random piece for valid move and make it when found
+		while(true) {
+			
+			Random rand = new Random();
+			int  randRow = rand.nextInt(5);
+			int  randColumn = rand.nextInt(9);			
+			
+			if(pieceMap[randRow][randColumn] == 1) {
+				
+				firstRow = randRow;
+				firstColumn = randColumn;
+				
+				if((randRow != 0) && (randRow != 4) && (randColumn !=0) && (randColumn !=8)) {
+					
+					if(validMove(randRow - 1, randColumn)) {
+						System.out.println(randRow + " " + randColumn + " SUCCESS1!!!");
+						movePiece(randRow - 1, randColumn);
+						break;
+					} else if(validMove(randRow - 1, randColumn + 1)) {
+						System.out.println(randRow + " " + randColumn + " SUCCESS2!!!");
+						movePiece(randRow - 1, randColumn + 1);
+						break;
+					} else if(validMove(randRow, randColumn + 1)) {
+						System.out.println(randRow + " " + randColumn + " SUCCESS3!!!");
+						movePiece(randRow, randColumn + 1);
+						break;
+					} else if(validMove(randRow + 1, randColumn + 1)) {
+						System.out.println(randRow + " " + randColumn + " SUCCESS4!!!");
+						movePiece(randRow + 1, randColumn + 1);
+						break;
+					} else if(validMove(randRow + 1, randColumn)) {
+						System.out.println(randRow + " " + randColumn + " SUCCESS5!!!");
+						movePiece(randRow + 1, randColumn);
+						break;
+					} else if(validMove(randRow + 1, randColumn - 1)) {	
+						System.out.println(randRow + " " + randColumn + " SUCCESS6!!!");
+						movePiece(randRow + 1, randColumn - 1);
+						break;
+					} else if(validMove(randRow, randColumn - 1)) {	
+						System.out.println(randRow + " " + randColumn + " SUCCESS7!!!");
+						movePiece(randRow, randColumn - 1);
+						break;
+					} else if(validMove(randRow - 1, randColumn - 1)) {	
+						System.out.println(randRow + " " + randColumn + " SUCCESS8!!!");
+						movePiece(randRow - 1, randColumn - 1);
+						break;
+					}
+				}
+				System.out.println(randRow + " " + randColumn + " failure...");
+			}
+		}	
 	}
 	
-	void eval(int rowIndex, int columnIndex, int lastValid, int lastRow, int lastColumn){
-		//check which players turn it is (black or white)
+	class pieceMove {
+		public int destRow, destColumn;
+		public String direction;
+		private int color;
 		
-		//check valid moves
+		pieceMove(int x, int y, String s, int c) {
+			
+			destRow = x;
+			destColumn = y;
+			direction = s;
+			color = c;
+		}
 		
-		//Remove opponent pieces after move 
-		if(lastValid == 1){
-			//moved up
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow-1][lastColumn]){
-				for(int i = rowIndex-1; i >= 0; --i){
-					if(pieceMap[i][columnIndex] == 2){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
-			//moved down
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow+1][lastColumn] ){
-				for(int i = rowIndex+1; i < 5; ++i){
-					if(pieceMap[i][columnIndex] == 2){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}	
-			//moved right
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn+1] ){
-				for(int i = columnIndex+1; i < 9; ++i){
-					if(pieceMap[rowIndex][i] == 2){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
-			//moved left 
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn-1]){
-				for(int i = columnIndex-1; i >= 0; --i){
-					if(pieceMap[rowIndex][i] == 2){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
+		public void setRow(int inRow) {
+			destRow = inRow;
 		}
-		if(lastValid == 2){
-			//moved up
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow-1][lastColumn]){
-				for(int i = rowIndex-1; i >= 0; --i){
-					if(pieceMap[i][columnIndex] == 1){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
-			//moved down
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow+1][lastColumn] ){
-				for(int i = rowIndex+1; i < 5; ++i){
-					if(pieceMap[i][columnIndex] == 1){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}	
-			//moved right
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn+1] ){
-				for(int i = columnIndex+1; i < 9; ++i){
-					if(pieceMap[rowIndex][i] == 1){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
-			//moved left 
-			if(pieceMap[rowIndex][columnIndex] == pieceMap[lastRow][lastColumn-1]){
-				for(int i = columnIndex-1; i >= 0; --i){
-					if(pieceMap[rowIndex][i] == 1){
-						pieceMap[i][columnIndex] = 0;
-					}
-				}
-			}
+		public void setColumn(int inColumn) {
+			destColumn = inColumn;
 		}
+		public void setDirection(String inDirection) {
+			direction = inDirection;
+		}
+		public void setColor(int inColor) {
+			color = inColor;
+		}
+		
 	}
 }
 
