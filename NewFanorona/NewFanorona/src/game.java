@@ -15,43 +15,123 @@ import javax.swing.*;
 
 public class game extends JApplet implements MouseListener{
 
+//different "cards (JPanels)" used in CardLayout
 	JPanel content;
 	private MainPanel mainWin;
 	private InstrPanel instrWin;
 	private GamePanel gameWin;
 
-	static final int SPACE_BTWN = 80;
-	static final int MARGIN = 80;
+	//board and piece drawing variables 
 	static int BOARD_LENGTH = 9;
 	static int BOARD_HEIGHT = 5;
+	static final int SPACE_BTWN = 80;
+	static final int MARGIN = 80;
+	static final int RADIUS = 15;
 	static int WIN_LENGTH = (BOARD_LENGTH*SPACE_BTWN) + MARGIN;
 	static int WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
-	private int MAX_MOVES = 10 * BOARD_HEIGHT;
-
+	private int MAX_MOVES = 10 * BOARD_HEIGHT;	
+	
+	//how to position of the pieces are stored
 	public int[][] pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
 
-	static final int RADIUS = 15;
-
-	
+	//used to track piece movement
 	int firstValid = 0;
 	int firstRow = 0;
 	int firstColumn = 0;
-	
-	public pieceMove[] gameMoves = new pieceMove[MAX_MOVES];
-	private LinkedList<pieceMove> validMoves = new LinkedList<pieceMove>();
-	
-	public pieceMove newMove = new pieceMove(0, 0, "NONE", 0);
 	int movesMade = 0;
 	
+	public pieceMove newMove = new pieceMove(0, 0, "NONE", 0);
+	public pieceMove[] gameMoves = new pieceMove[MAX_MOVES];
+	private LinkedList<pieceMove> validMoves = new LinkedList<pieceMove>();
 	public Boolean advance = true, retreat = false, onePlayer;
 	
-	
+	//client/server variables
+	public ServerSocket serverSocket = null;
+	public Socket clientSocket = null;
+	public int PORT_NUM = 4444;
 	
 	Graphics g;
 
 	//initialize all Panels
 	public void init()
 	{
+		//server/client setup
+		String ans = " ";
+		String response = " ";
+		boolean onePlayer = false;
+		boolean computers = false;
+		boolean server = false;
+		boolean wait = false;
+		
+		response = JOptionPane.showInputDialog("Is this the server? (y/n)");
+		if(response.compareTo("y") == 0)
+			server = true;
+		
+		ans = JOptionPane.showInputDialog("(1)One player, (2)Two player, or (3)AI vs AI?");
+		if(ans.compareTo("1") == 0)
+			onePlayer = true;
+		else if(ans.compareTo("2") == 0)
+			onePlayer = false;
+		else if(ans.compareTo("3") == 0)
+			computers = true;
+		else
+			System.out.println("Error, invalid input");
+		
+		if(server){
+			//create client listener
+			try {
+			    serverSocket = new ServerSocket(PORT_NUM);
+			} 
+			catch (IOException e) {
+			    System.out.println("Could not listen on port: 4444");
+			    System.exit(-1); 
+			}
+			
+			//create client socket
+			try {
+			    clientSocket = serverSocket.accept();
+			} 
+			catch (IOException e) {
+			    System.out.println("Accept failed: 4444");
+			    System.exit(-1);
+			}
+			
+			//establish communication with client
+			try{
+			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			}
+			catch(IOException e){
+				System.out.println("In/Out with client failed");
+			}
+		}
+	else 
+	{
+		// get a hostname to connect to
+		response = JOptionPane.showInputDialog("Enter hostname for server: ");
+		try {
+			clientSocket = new Socket(response, PORT_NUM);
+		} catch (UnknownHostException e) {
+			System.out.println("Connection failed: " + response);
+		    System.exit(-1);
+		} catch (IOException e) {
+			System.out.println("Connection failed: " + response);
+		    System.exit(-1);
+		}
+
+		// establish communication with server
+		try {
+			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+		} catch (IOException e) {
+			System.out.println("Client in/out failed");
+		    System.exit(-1);
+		}
+
+		// client doesn't go first
+		wait = true;
+	}
+		
 		//create main menu window
 		JFrame mainMenu = new JFrame("FANORONA");
 		mainMenu.setSize(WIN_LENGTH, WIN_HEIGHT);
@@ -75,6 +155,7 @@ public class game extends JApplet implements MouseListener{
         mainMenu.setLocationByPlatform(true);
         mainMenu.setVisible(true);
 	}
+
 
 	//Panel Classes
 	class MainPanel extends JPanel
@@ -100,8 +181,8 @@ public class game extends JApplet implements MouseListener{
 
 			//create buttons
 			instructions = new JButton("Instructions");
-			onePlayerGame = new JButton("1 Player");
-			twoPlayerGame = new JButton("2 Player");
+			//onePlayerGame = new JButton("1 Player");
+			//twoPlayerGame = new JButton("2 Player");
 
 			//import game board image
 			try {
@@ -119,6 +200,7 @@ public class game extends JApplet implements MouseListener{
 	            }
 	        });
 
+			/*
 			onePlayerGame.addActionListener( new ActionListener()
 	        {
 	            public void actionPerformed(ActionEvent e)
@@ -138,12 +220,13 @@ public class game extends JApplet implements MouseListener{
 	                layout.last(content);
 	            }
 	        });
+	        */
 
 			repaint();
 			mapInitPieces();
 			add(instructions);
-			add(onePlayerGame);
-			add(twoPlayerGame);
+			//add(onePlayerGame);
+			//add(twoPlayerGame);
 			add(text);
 		}
 
