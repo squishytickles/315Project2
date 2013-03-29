@@ -1,7 +1,9 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Random;
 import java.awt.event.ActionEvent;
@@ -15,7 +17,7 @@ import javax.swing.*;
 
 public class game extends JApplet implements MouseListener{
 
-//different "cards (JPanels)" used in CardLayout
+	//different "cards (JPanels)" used in CardLayout
 	JPanel content;
 	private MainPanel mainWin;
 	private InstrPanel instrWin;
@@ -58,6 +60,11 @@ public class game extends JApplet implements MouseListener{
 		//server/client setup
 		String ans = " ";
 		String response = " ";
+		String line;
+		DataInputStream input = null;
+		DataOutputStream output = null;
+		PrintStream print = null;
+		
 		boolean onePlayer = false;
 		boolean computers = false;
 		boolean server = false;
@@ -77,6 +84,7 @@ public class game extends JApplet implements MouseListener{
 		else
 			System.out.println("Error, invalid input");
 		
+		//server side
 		if(server){
 			//create client listener
 			try {
@@ -98,64 +106,75 @@ public class game extends JApplet implements MouseListener{
 			
 			//establish communication with client
 			try{
-			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				input = new DataInputStream(clientSocket.getInputStream());
+				print = new PrintStream(clientSocket.getOutputStream());
+			
+				//when data is received, send it to the client
+				while(true){
+					line = input.readLine();
+					print.println(line);
+				}
 			}
 			catch(IOException e){
 				System.out.println("In/Out with client failed");
 			}
 		}
-	else 
-	{
-		// get a hostname to connect to
-		response = JOptionPane.showInputDialog("Enter hostname for server: ");
-		try {
-			clientSocket = new Socket(response, PORT_NUM);
-		} catch (UnknownHostException e) {
-			System.out.println("Connection failed: " + response);
-		    System.exit(-1);
-		} catch (IOException e) {
-			System.out.println("Connection failed: " + response);
-		    System.exit(-1);
+		//client side
+		else  
+		{
+			// get a host name to connect to
+			response = JOptionPane.showInputDialog("Enter hostname for server: ");
+			try {
+				clientSocket = new Socket(response, PORT_NUM);
+				output = new DataOutputStream(clientSocket.getOutputStream());
+				input = new DataInputStream(clientSocket.getInputStream());
+			} catch (UnknownHostException e) {
+				System.out.println("Connection failed: " + response);
+			    System.exit(-1);
+			} catch(IOException e){
+				System.err.println("I/O could not connect");
+			}
 		}
-
-		// establish communication with server
-		try {
-			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-		} catch (IOException e) {
-			System.out.println("Client in/out failed");
-		    System.exit(-1);
+	
+	//if the client is open, send the welcome and game info	
+	if(clientSocket !=null && output != null && input != null){
+		try{
+			output.writeBytes("WELCOME!/n");
+			output.writeBytes("INFO " + BOARD_LENGTH + " " + BOARD_HEIGHT + " B 5000");
+		} catch (UnknownHostException e){
+			System.err.println("Trying to connect to unknnown host");
+		} catch(IOException e){
+			System.err.println("I/O Exception " + e);
 		}
-
-		// client doesn't go first
-		wait = true;
 	}
+	// client doesn't go first
+	wait = true;
+		//---------END SERVER/CLIENT SETUP-----------//
+		
 		
 		//create main menu window
 		JFrame mainMenu = new JFrame("FANORONA");
 		mainMenu.setSize(WIN_LENGTH, WIN_HEIGHT);
 		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+	
 		JPanel content = new JPanel();
 		content.setLayout(new CardLayout());
-
+	
 		mainWin = new MainPanel(content);
 		instrWin = new InstrPanel(content);
 		gameWin = new GamePanel(content);
-
+	
 		gameWin.addMouseListener(this);
-
+	
 		content.add(mainWin, "Main Menu");
 		content.add(instrWin, "Instructions");
 		content.add(gameWin, "Fanorona");
-
+	
 		mainMenu.setContentPane(content);
-        mainMenu.pack();   
-        mainMenu.setLocationByPlatform(true);
-        mainMenu.setVisible(true);
+	    mainMenu.pack();   
+	    mainMenu.setLocationByPlatform(true);
+	    mainMenu.setVisible(true);
 	}
-
 
 	//Panel Classes
 	class MainPanel extends JPanel
