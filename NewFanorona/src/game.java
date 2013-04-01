@@ -20,13 +20,13 @@ public class game extends JApplet implements MouseListener{
 
 	static final int SPACE_BTWN = 80;
 	static final int MARGIN = 80;
-	static int BOARD_LENGTH = 9;
-	static int BOARD_HEIGHT = 5;
-	static int WIN_LENGTH = (BOARD_LENGTH*SPACE_BTWN) + MARGIN;
-	static int WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
+	static int BOARD_LENGTH = 0;
+	static int BOARD_HEIGHT = 0;
+	static int WIN_LENGTH = 0;
+	static int WIN_HEIGHT = 0; 
 	private static int MAX_MOVES = 10 * BOARD_HEIGHT;
 
-	public int[][] pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
+	public int[][] pieceMap;
 	public Point[] compass = new Point[8];
 
 	static final int RADIUS = 15;
@@ -59,12 +59,14 @@ public class game extends JApplet implements MouseListener{
 	public void init()
 	{		
 		//server/client setup
-		/*String response = " ";
-		String line;	
+		String response = " ";
+		String length = " ";
+		String height = " ";
 		boolean server = false;
-		boolean wait = false;
 		PrintWriter out;
 		BufferedReader in;
+		
+		ServerClientProtocol protocol = new ServerClientProtocol();
 
 		response = JOptionPane.showInputDialog("Is this the server? (y/n)");
 		if(response.compareTo("y") == 0)
@@ -73,6 +75,16 @@ public class game extends JApplet implements MouseListener{
 		//server side
 		if(server){
 			try {
+				//get board sizes from user
+				length = JOptionPane.showInputDialog(rootPane, "BOARD LENGTH: ");
+				BOARD_LENGTH = Integer.parseInt(length);
+				height = JOptionPane.showInputDialog(rootPane, "BOARD HEIGHT: ");
+				BOARD_HEIGHT = Integer.parseInt(height);
+				pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
+				
+				WIN_LENGTH =(BOARD_LENGTH*SPACE_BTWN) + MARGIN;
+				WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
+				
 				//create client listener
 				serverSocket = new ServerSocket(PORT_NUM);
 
@@ -82,22 +94,21 @@ public class game extends JApplet implements MouseListener{
 			    //establish communication with client
 			   out = new PrintWriter(clientSocket.getOutputStream(), true);
 			   in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			   String inputLine, outputLine;
-			   ServerClientProtocol protocol = new ServerClientProtocol();
-			   outputLine = protocol.processInput(null);
+			   String outputLine;
+			   outputLine = protocol.processInput("START");
 			   out.println(outputLine);
 
-				while ((inputLine = in.readLine()) != null) {   
-				    outputLine = protocol.processInput(inputLine);
+			   initGameState();
+			   System.out.println("Server Board Created!");
+			   
+			   //send board info to client
+				    outputLine = protocol.processInput("INFO " + BOARD_LENGTH + " " + BOARD_HEIGHT);
 				    out.println(outputLine);
-				    if (outputLine.equals("Bye."))
-				    break;
-				}
 			} 
 			catch (IOException e) {
 			    System.out.println("Accept failed on port: " + PORT_NUM);
 			    System.exit(-1);
-			}	
+			}
 		}
 
 		//client side
@@ -111,53 +122,43 @@ public class game extends JApplet implements MouseListener{
 				//establish communication with server
 				out = new PrintWriter(clientSocket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-				String inputLine, outputLine;
-				ServerClientProtocol protocol = new ServerClientProtocol();
+				String inputLine;
+				String outputLine = " ";
 
-				while ((inputLine = in.readLine()) != null) {   
-				    outputLine = protocol.processInput(inputLine);
+				while ((inputLine  = in.readLine()) != null) {  
+					//System.out.println("CLIENT OUTPUT: " + outputLine);
+
+					if(inputLine.substring(0,4).equals("INFO")) {	
+					
+				    	length = inputLine.substring(5, 6);
+				    	height = inputLine.substring(7);
+				    	
+				    	System.out.println("length = " + length);
+				    	System.out.println("height = " + height);
+				    	
+				    	BOARD_LENGTH = Integer.parseInt(length);
+						BOARD_HEIGHT = Integer.parseInt(height);
+						pieceMap = new int[BOARD_HEIGHT][BOARD_LENGTH];
+						WIN_LENGTH =(BOARD_LENGTH*SPACE_BTWN) + MARGIN;
+						WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
+						
+						System.out.println(inputLine + " input inside");
+						
+				    	initGameState();
+					}
+					else
+						System.out.println("ELSE " + inputLine);
+					
+					
+				    outputLine = "READY";
 				    out.println(outputLine);
-				    if (outputLine.equals("Bye."))
-				    break;
-			    }
+			   }
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(rootPane, "Accept failed on port: " + PORT_NUM);
 				e.printStackTrace();
 			}	
 		}
-
-		// client doesn't go first
-		wait = true;*/
-
-		//---------END SERVER/CLIENT SETUP-----------//
-		
-		
-		//create a set of possible move directions
-		compass[0] = new Point(-1,0);compass[1] = new Point(-1,1);compass[2] = new Point(0,1);compass[3] = new Point(1,1);
-		compass[4] = new Point(1,0);compass[5] = new Point(1,-1);compass[6] = new Point(0,-1);compass[7] = new Point(-1,-1);
-
-		//create main menu window
-		JFrame mainMenu = new JFrame("FANORONA");
-		mainMenu.setSize(WIN_LENGTH, WIN_HEIGHT);
-		mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		JPanel content = new JPanel();
-		content.setLayout(new CardLayout());
-
-		mainWin = new MainPanel(content);
-		instrWin = new InstrPanel(content);
-		gameWin = new GamePanel(content);
-
-		gameWin.addMouseListener(this);
-
-		content.add(mainWin, "Main Menu");
-		content.add(instrWin, "Instructions");
-		content.add(gameWin, "Fanorona");
-
-		mainMenu.setContentPane(content);
-        mainMenu.pack();   
-        mainMenu.setLocationByPlatform(true);
-        mainMenu.setVisible(true);
+		//---------END SERVER/CLIENT SETUP-----------//		
 	}
 
 	//Panel Classes
@@ -1402,7 +1403,39 @@ public class game extends JApplet implements MouseListener{
 		}
 		return score; 		
 	}
+
+	void initGameState(){
+	//create a set of possible move directions
+			compass[0] = new Point(-1,0);compass[1] = new Point(-1,1);compass[2] = new Point(0,1);compass[3] = new Point(1,1);
+			compass[4] = new Point(1,0);compass[5] = new Point(1,-1);compass[6] = new Point(0,-1);compass[7] = new Point(-1,-1);
+
+			//create main menu window
+			JFrame mainMenu = new JFrame("FANORONA");
+			mainMenu.setSize(WIN_LENGTH, WIN_HEIGHT);
+			mainMenu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+			JPanel content = new JPanel();
+			content.setLayout(new CardLayout());
+
+			mainWin = new MainPanel(content);
+			instrWin = new InstrPanel(content);
+			gameWin = new GamePanel(content);
+
+			gameWin.addMouseListener(this);
+
+			content.add(mainWin, "Main Menu");
+			content.add(instrWin, "Instructions");
+			content.add(gameWin, "Fanorona");
+
+			mainMenu.setContentPane(content);
+	        mainMenu.pack();   
+	        mainMenu.setLocationByPlatform(true);
+	        mainMenu.setVisible(true);
 }
+
+
+}
+
 
 
 
