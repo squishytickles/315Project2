@@ -45,7 +45,7 @@ public class game extends JApplet implements MouseListener {
 	
 	//public pieceMove newMove = new pieceMove(0, 0, "NONE", 0);
 	int movesMade = 0;
-	public Boolean advance = true, retreat = false, onePlayer, searching = false, 
+	public Boolean advance = true, retreat = false, onePlayer = false, searching = false, 
 			       keepMoving = false, paikaCheck = false, sacrifice = false, blackSacrifice = false, 
 			       whiteSacrifice = false, paikaMade = false;
 	
@@ -98,80 +98,106 @@ public class game extends JApplet implements MouseListener {
 				WIN_LENGTH =(BOARD_LENGTH*SPACE_BTWN) + MARGIN;
 				WIN_HEIGHT = (BOARD_HEIGHT*SPACE_BTWN) + MARGIN;
 
-				//create client listener
-				serverSocket = new ServerSocket(PORT_NUM);
-
-				//create client socket
-			    clientSocket = serverSocket.accept();
-
-			    //establish communication with client
-			   out = new PrintWriter(clientSocket.getOutputStream(), true);
-			   in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			   String outputLine;
-			   outputLine = protocol.processInput("START");
-			   out.println(outputLine);
-
-			   initGameState();
-			   System.out.println("Server Board Created!");
-
-			   //send board info to client
-			   outputLine = protocol.processInput("INFO " + BOARD_LENGTH + " " + BOARD_HEIGHT);
-			   out.println(outputLine);
-				    
-			   while ((inputLine  = in.readLine()) != null) {     
-				    if((inputLine.substring(0,1)).equals("W")) {
-						
-						System.out.println("COMMAND: " + inputLine);
+				//check if one player or two
+				response = JOptionPane.showInputDialog(rootPane, "How many players? (1 or 2)");
+				if(response.equals("1"))
+				{
+					onePlayer = true;
+					initGameState();
+					protocol.processInput("START");
+					protocol.processInput("INFO");
 					
-        				String colorString = inputLine.substring(0,1);
-        				String firstRowString = inputLine.substring(2,3);
-        				String firsColString = inputLine.substring(4,5);
-        				String secondRowString = inputLine.substring(6,7);
-        				String secondColString = inputLine.substring(8,9);
-        				String captureType = inputLine.substring(10);
-        					
-        				gameMoves[movesMade] = new pieceMove(0, 0, 0, 0,"NONE", 0);	
-        				
-        				gameMoves[movesMade].sourceRow = Integer.parseInt(firstRowString);
-        				gameMoves[movesMade].sourceColumn = Integer.parseInt(firsColString);
-        				gameMoves[movesMade].destRow = Integer.parseInt(secondRowString);
-        				gameMoves[movesMade].destColumn = Integer.parseInt(secondColString);
-        				
-        				gameMoves[movesMade].direction = findDirection((gameMoves[movesMade].destRow-gameMoves[movesMade].sourceRow),(gameMoves[movesMade].destColumn-gameMoves[movesMade].sourceColumn));
-        				
-        				if(colorString.equals("B"))
-        					gameMoves[movesMade].color = 2;
-        				else if(colorString.equals("W"))
-        					gameMoves[movesMade].color = 1;
-        				
-        				firstRow = Integer.parseInt(firstRowString);
-        				firstColumn = Integer.parseInt(firsColString);
-        				
-        				if(captureType.equals("A")) {
-        					advance = true;
-        					retreat = false;
-        				} else if(captureType.equals("R")) {
-        					retreat = true;
-        					advance = false;
-        				}
-        				
-        				System.out.println("CAPTURE PARAMS: " + gameMoves[movesMade].color + " " + gameMoves[movesMade].destRow  + gameMoves[movesMade].destColumn);
-        				capturePieces(gameMoves[movesMade], 0);
-        				movePiece(gameMoves[movesMade].destRow, gameMoves[movesMade].destColumn);				
-				    
-				    } else if((inputLine.substring(0,4)).equals("RESET")) {
-				    	System.out.println("TEST3");
-		            	keepMoving = false;
-		            	movesMade = 0;
-		            	whiteSacrifice = false; 
-		            	blackSacrifice = false;
-		            	//gameMoves[movesMade].color = 1;
-		                mapInitPieces();						
+					if(onePlayer && (movesMade == 1) && blackSacrifice) {
+						initTree();
+						computerMove();
+					} 
+					
+					if(movesMade == 0) {
+						System.out.println("NOT COMPUTERS MOVE!");
+					} else if((onePlayer && (gameMoves[movesMade-1].color == 2) && !keepMoving) || (onePlayer && (gameMoves[movesMade-1].color == 1) && keepMoving)) {	
+						initTree();
+						computerMove();
 					}
-				    System.out.println("test for reset: " + inputLine);
-			   }
-			   
-				    
+				}
+				
+				//2 PLAYERS - START CLIENT, SEND BOARD INFO
+				else {
+					onePlayer = false;
+					//continue on like normal.. 
+				
+					//create client listener
+					serverSocket = new ServerSocket(PORT_NUM);
+		
+					//create client socket
+				    clientSocket = serverSocket.accept();
+		
+				    //establish communication with client
+				   out = new PrintWriter(clientSocket.getOutputStream(), true);
+				   in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				   String outputLine;
+				   outputLine = protocol.processInput("START");
+				   out.println(outputLine);
+		
+				   initGameState();
+				   System.out.println("Server Board Created!");
+		
+				   //send board info to client
+				   outputLine = protocol.processInput("INFO " + BOARD_LENGTH + " " + BOARD_HEIGHT);
+				   out.println(outputLine);
+					    
+				   while ((inputLine  = in.readLine()) != null) {     
+					    if((inputLine.substring(0,1)).equals("W")) {
+							
+							System.out.println("COMMAND: " + inputLine);
+						
+		    				String colorString = inputLine.substring(0,1);
+		    				String firstRowString = inputLine.substring(2,3);
+		    				String firsColString = inputLine.substring(4,5);
+		    				String secondRowString = inputLine.substring(6,7);
+		    				String secondColString = inputLine.substring(8,9);
+		    				String captureType = inputLine.substring(10);
+		    					
+		    				gameMoves[movesMade] = new pieceMove(0, 0, 0, 0,"NONE", 0);	
+		    				
+		    				gameMoves[movesMade].sourceRow = Integer.parseInt(firstRowString);
+		    				gameMoves[movesMade].sourceColumn = Integer.parseInt(firsColString);
+		    				gameMoves[movesMade].destRow = Integer.parseInt(secondRowString);
+		    				gameMoves[movesMade].destColumn = Integer.parseInt(secondColString);
+		    				
+		    				gameMoves[movesMade].direction = findDirection((gameMoves[movesMade].destRow-gameMoves[movesMade].sourceRow),(gameMoves[movesMade].destColumn-gameMoves[movesMade].sourceColumn));
+		    				
+		    				if(colorString.equals("W"))
+		    					gameMoves[movesMade].color = 2;
+		    				else if(colorString.equals("B"))
+		    					gameMoves[movesMade].color = 1;
+		    				
+		    				firstRow = Integer.parseInt(firstRowString);
+		    				firstColumn = Integer.parseInt(firsColString);
+		    				
+		    				if(captureType.equals("A")) {
+		    					advance = true;
+		    					retreat = false;
+		    				} else if(captureType.equals("R")) {
+		    					retreat = true;
+		    					advance = false;
+		    				}
+		    				
+		    				System.out.println("CAPTURE PARAMS: " + gameMoves[movesMade].color + " " + gameMoves[movesMade].destRow  + gameMoves[movesMade].destColumn);
+		    				capturePieces(gameMoves[movesMade], 0);
+		    				movePiece(gameMoves[movesMade].destRow, gameMoves[movesMade].destColumn);				
+					    
+					    } else if((inputLine.substring(0,4)).equals("RESET")) {
+					    	System.out.println("TEST3");
+			            	keepMoving = false;
+			            	movesMade = 0;
+			            	whiteSacrifice = false; 
+			            	blackSacrifice = false;
+			            	//gameMoves[movesMade].color = 1;
+			                mapInitPieces();						
+						}
+					    System.out.println("test for reset: " + inputLine);
+				   } 
+				}    
 			} 
 			catch (IOException e) {
 			    System.out.println("Accept failed on port: " + PORT_NUM);
@@ -235,11 +261,14 @@ public class game extends JApplet implements MouseListener {
         				
         				gameMoves[movesMade].direction = findDirection((gameMoves[movesMade].destRow-gameMoves[movesMade].sourceRow),(gameMoves[movesMade].destColumn-gameMoves[movesMade].sourceColumn));
         				
-        				if(colorString == "B")
+        				if(colorString == "W")
         					gameMoves[movesMade].color = 2;
-        				else if(colorString == "W")
+        				else if(colorString == "B")
         					gameMoves[movesMade].color = 1;
         				
+        				System.out.println(" HMMMMMMM:" + gameMoves[movesMade].color);
+        				
+        				gameMoves[movesMade].color = 2;
         				firstRow = Integer.parseInt(firstRowString);
         				firstColumn = Integer.parseInt(firsColString);
         				
@@ -253,6 +282,7 @@ public class game extends JApplet implements MouseListener {
 
         				capturePieces(gameMoves[movesMade], 0);
         				movePiece(gameMoves[movesMade].destRow, gameMoves[movesMade].destColumn);
+        				
 					} else if((inputLine.substring(0,4)).equals("RESET")) {
 						System.out.println("TEST2");
 		            	keepMoving = false;
@@ -283,8 +313,7 @@ public class game extends JApplet implements MouseListener {
 		private JPanel content;
 		private JLabel text;
 		private JButton instructions;
-		private JButton onePlayerGame;
-		private JButton twoPlayerGame;
+		private JButton game;
 
 		private BufferedImage mainImage;
 
@@ -301,8 +330,7 @@ public class game extends JApplet implements MouseListener {
 
 			//create buttons
 			instructions = new JButton("Instructions");
-			onePlayerGame = new JButton("1 Player");
-			twoPlayerGame = new JButton("2 Player");
+			game = new JButton("Start Game");
 
 			//import game board image
 			try {
@@ -320,31 +348,20 @@ public class game extends JApplet implements MouseListener {
 	            }
 	        });
 
-			onePlayerGame.addActionListener( new ActionListener()
+			
+			game.addActionListener( new ActionListener()
 	        {
 	            public void actionPerformed(ActionEvent e)
 	            {
-	            	onePlayer = true;
 	                CardLayout layout = (CardLayout) content.getLayout();
 	                layout.last(content);
 	            }
 	        });
 			
-			twoPlayerGame.addActionListener( new ActionListener()
-	        {
-	            public void actionPerformed(ActionEvent e)
-	            {
-	            	onePlayer = false;
-	                CardLayout layout = (CardLayout) content.getLayout();
-	                layout.last(content);
-	            }
-	        });
-
 			repaint();
 			mapInitPieces();
 			add(instructions);
-			add(onePlayerGame);
-			add(twoPlayerGame);
+			add(game);
 			add(text);
 		}
 
@@ -369,9 +386,16 @@ public class game extends JApplet implements MouseListener {
 
 			//create instructions text
 			instr = new JLabel("<html>INSTRUCTIONS: <br><html>" 
-				   + "<html>Step 1: click the piece you want to move<br><html>"
-				   + "<html>Step 2: click the place on the board you want to move to<br><html>"
-				   + "<html>Step 3: blah blah... to be continued<br><html>");
+				   + "<html>Step 1: Click the piece you want to move:<br><html>"
+				   + "<html> +White moves first.<br><html>"
+				   
+				   + "<html>Step 2: Select to either advance, retreat, or sacrifice.<br><html>"
+				   + "<html>+ Advance will capture all pieces ahead the space moved to.<br><html>"
+				   + "<html>+ Retreat will capture all pieces behind the piece moved.<br><html>"
+				   + "<html>+ Sacrifice will allow you to double clock to 'sacrifice a move'.<br><html>"
+				   
+				   + "<html>Step 3: Click an empty space adjacent to your piece that is attached by a line.<br><html>"
+				   + "<html>Step 4: If another move is available and it is not to a previously visited space, you must move again.<br><html>");
 
 			//create back button
 			back = new JButton("Back");
@@ -427,7 +451,7 @@ public class game extends JApplet implements MouseListener {
 	            {
 	            	movesMade = 0;
 	            	gameMoves[movesMade] = new pieceMove(0, 0, 0, 0,"NONE", 0);
-	            	gameMoves[movesMade].color = 1;
+	            	gameMoves[movesMade].color = 2;
 	                mapInitPieces();
 	                CardLayout layout = (CardLayout) content.getLayout();
 	                layout.first(content);
@@ -608,11 +632,11 @@ public class game extends JApplet implements MouseListener {
 
 					switch(pieceMap[j][i]) {			
 						case 1: {
-							drawPiece(Color.WHITE, this_x, this_y, g);
+							drawPiece(Color.BLACK, this_x, this_y, g);
 						}
 						break;
 						case 2: {
-							drawPiece(Color.BLACK, this_x, this_y, g);
+							drawPiece(Color.WHITE, this_x, this_y, g);
 						}
 						break;
 						case 3: {
@@ -755,6 +779,8 @@ public class game extends JApplet implements MouseListener {
 			if(keepMoving && (movesMade > 0) && ((firstValid != gameMoves[movesMade-1].color) || ((gameMoves[movesMade-1].destRow != firstRow) || (gameMoves[movesMade-1].destColumn != firstColumn)))) {
 				System.out.println("CANNOT MOVE PIECE: another piece is in middle of multiple move");
 			} else if(validMove(secondRow, secondColumn)) {
+				
+				System.out.println("SDFSFDSFDSF");
 
 				for(int i = 0; i < 8; ++i) {
 					if((secondRow+compass[i].x >= 0) && (secondRow+compass[i].x <= BOARD_HEIGHT-1) && (secondColumn+compass[i].y <= BOARD_LENGTH-1) && (secondColumn+compass[i].y >= 0)) {
@@ -795,24 +821,27 @@ public class game extends JApplet implements MouseListener {
 					else if(retreat)
 						moveCommand += "R";					
 					
-					if(server) {			
+					if(server && !onePlayer) {			
 						outputLine = protocol.processInput(moveCommand);
 						out.println(outputLine);
-					} else {
-						
+						System.out.println("server output: " + outputLine);
+					}else if(!server && !onePlayer){
 						outputLine = protocol.processInput(moveCommand);
 						out.println(outputLine);							
-					}
+						}
+					gameMoves[movesMade].color = firstValid;
 					capturePieces(gameMoves[movesMade], 0);
 					movePiece(secondRow, secondColumn);				
 					//**************************************************************************					
 				}		
-			} else {
+			} else if(movesMade != 0) {
 				System.out.println("Paika Checker: " +  secondRow + secondColumn);
 				keepMoving = true;
 				allValidMoves(firstValid);
 				keepMoving = false;
 				System.out.println("Paika Checker: " +  validMoves.size()  + firstValid);
+				
+				System.out.println("TEST!!!!!!!!: " + gameMoves[movesMade-1].color  + " " + firstValid);
 				if((validMoves.size() == 0) && (gameMoves[movesMade-1].color != firstValid)) {
 					
 					validMoves.clear();
@@ -829,10 +858,24 @@ public class game extends JApplet implements MouseListener {
 		firstColumn = secondColumn;
 	}
 	
+	
 	Boolean validMove(int secondRow, int secondColumn){
 		//check that the correct color is trying to move
 		int currentColor = pieceMap[firstRow][firstColumn];	
 		
+		if((currentColor == 2) && !server) {
+			System.out.println("NOT YOUR TURN!   ");
+			return false;				
+		} else if((currentColor == 1) && server) {
+			System.out.println("NOT YOUR TURN!   ");
+			return false;				
+		}
+		
+		if(!server && (movesMade == 0)){
+			System.out.println("NOT YOUR TURN!   ");
+			return false;
+		}
+			
 		for(int i = 0; i < turnMoves.size(); ++i) {
 			if((secondRow == turnMoves.get(i).sourceRow) && (secondColumn == turnMoves.get(i).sourceColumn)) {
 				if(!keepMoving)System.out.println("INVALID MOVE: previously visited space");
@@ -1158,8 +1201,9 @@ public class game extends JApplet implements MouseListener {
 		gameMoves[movesMade].setSourceColumn(firstColumn);
 		gameMoves[movesMade].setDestRow(secondRow); 
 		gameMoves[movesMade].setDestColumn(secondColumn);
-		gameMoves[movesMade].setColor(currentColor);
+		gameMoves[movesMade].color = currentColor;
 		
+		System.out.println("Valid color set: " + gameMoves[movesMade].color);
 		return true;
 	}
 		
@@ -1306,6 +1350,7 @@ public class game extends JApplet implements MouseListener {
 		}
 	}
 	
+	
 	void movePiece(int secondRow, int secondColumn){
 		
 		int movingColor = pieceMap[firstRow][firstColumn];
@@ -1321,6 +1366,7 @@ public class game extends JApplet implements MouseListener {
 			System.out.println("Last Move: WHITE");	
 		
 		turnMoves.add(gameMoves[movesMade]);
+		System.out.println("HHMMMM@@@@@: " + movesMade + gameMoves[movesMade].color);
 		movesMade++;
 		
 		gameMoves[movesMade] =  new pieceMove(0, 0, 0, 0,"NONE", 0);
