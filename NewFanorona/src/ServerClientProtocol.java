@@ -14,38 +14,44 @@ public class ServerClientProtocol extends game{
         
         String info = new String(bytes);
         
- 
-        if(state == START)
-        {
-            JOptionPane.showMessageDialog(rootPane, "WELCOME!");
-            state = INFO;
+        if(server){
+        	
+	        if(state == START)
+	        {
+	            JOptionPane.showMessageDialog(rootPane, "WELCOME!");
+	            state = INFO;
+	        }
+	        else if(state == INFO)
+	        {
+	           JOptionPane.showMessageDialog(rootPane, "INFO: " + info);
+	           state = MOVE;
+	           return info; 
+	        }
+	        else if(state == MOVE) {
+	        	
+	        	JOptionPane.showMessageDialog(rootPane, "MOVE: " + info);	
+	        	return info;
+	        }
+	        else if(state == END)
+	        {
+	        	JOptionPane.showMessageDialog(rootPane, "GAME OVER");
+	        }
+			return "END ";
+        } else {
+        	
+        	state = MOVE;
+        	
+        	if(state == MOVE) {
+	        	
+	        	JOptionPane.showMessageDialog(rootPane, "MOVE: " + info);	
+	        	return info;
+	        }
+	        else if(state == END)
+	        {
+	        	JOptionPane.showMessageDialog(rootPane, "GAME OVER");
+	        }
+			return "END ";
+        	
         }
-        else if(state == INFO)
-        {
-           JOptionPane.showMessageDialog(rootPane, "INFO: " + info);
-           state = MOVE;
-           return info; 
-        }
-        else if(state == MOVE) {
-            if(info.equalsIgnoreCase("W"))
-            {
-                //set move for white...
-             //send updated board to server
-            }
-            else if(info.equalsIgnoreCase("B"))
-            {
-                //set move for black
-            	//send updated board to client
-            }
-            else
-            	//send to server/client that move was invalid..
-            	JOptionPane.showMessageDialog(rootPane, "INVALID");
-            return "MOVE";
-        }
-        else if(state == END)
-        {
-        	JOptionPane.showMessageDialog(rootPane, "GAME OVER");
-        }
-		return "END ";
     }
 }
